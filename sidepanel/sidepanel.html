@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web Crawler - Side Panel</title>
+    <link rel="stylesheet" href="sidepanel.css">
+</head>
+
+<body>
+    <div class="sidepanel-container">
+        <div class="sidepanel-header">
+            <div class="header-icon">🕷️</div>
+            <div class="header-text">
+                <h1>Web Crawler</h1>
+                <p>Extract & Analyze Web Data</p>
+            </div>
+        </div>
+
+        <div class="sidepanel-content">
+            <div class="quick-actions">
+                <div class="action-cards">
+                    <div class="action-card" id="extractLinksCard">
+                        <div class="card-icon">🔗</div>
+                        <div class="card-content">
+                            <h3>Extract Links</h3>
+                            <p>Get all links from current page</p>
+                        </div>
+                    </div>
+                    <div class="action-card" id="extractImagesCard">
+                        <div class="card-icon">🖼️</div>
+                        <div class="card-content">
+                            <h3>Extract Images</h3>
+                            <p>Capture all images</p>
+                        </div>
+                    </div>
+                    <div class="action-card" id="extractMetaCard">
+                        <div class="card-icon">📊</div>
+                        <div class="card-content">
+                            <h3>Get Metadata</h3>
+                            <p>SEO & page info</p>
+                        </div>
+                    </div>
+                    <div class="action-card" id="fullCrawlCard">
+                        <div class="card-icon">🚀</div>
+                        <div class="card-content">
+                            <h3>Full Crawl</h3>
+                            <p>Extract everything</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="current-page">
+                <div class="page-header">
+                    <h3>Current Page</h3>
+                </div>
+                <div class="page-info">
+                    <div class="info-item">
+                        <span class="info-label">URL:</span>
+                        <span class="info-value" id="currentUrl">Loading...</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Status:</span>
+                        <span class="info-value" id="pageStatus">Ready</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="extract-options">
+                <h3>Options</h3>
+                <div class="options-list">
+                    <label class="option-item">
+                        <input type="checkbox" id="includeExternalLinks" checked>
+                        <span>Include external links</span>
+                    </label>
+                    <label class="option-item">
+                        <input type="checkbox" id="includeImages" checked>
+                        <span>Include images</span>
+                    </label>
+                    <label class="option-item">
+                        <input type="checkbox" id="includeMetadata" checked>
+                        <span>Include metadata</span>
+                    </label>
+                    <label class="option-item">
+                        <input type="checkbox" id="autoExport">
+                        <span>Auto-export results</span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="results-preview" id="resultsPreview">
+                <h3>Results Preview</h3>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-number" id="linksCount">0</div>
+                        <div class="stat-label">Links</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="imagesCount">0</div>
+                        <div class="stat-label">Images</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="metaCount">0</div>
+                        <div class="stat-label">Meta Tags</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="export-section">
+                <button id="exportJsonBtn" class="btn btn-export">
+                    <span>📥 Export JSON</span>
+                </button>
+                <button id="exportCsvBtn" class="btn btn-export btn-secondary">
+                    <span>📊 Export CSV</span>
+                </button>
+            </div>
+
+            <div class="help-section">
+                <h3>💡 How to Use</h3>
+                <p>1. Open any webpage</p>
+                <p>2. Click on any action card above to extract data</p>
+                <p>3. View results in the Crawler tab in DevTools (F12)</p>
+                <p>4. Export data using the buttons above</p>
+            </div>
+        </div>
+
+        <div class="sidepanel-footer">
+            <p>Web Crawler DevTools v1.0.0</p>
+        </div>
+    </div>
+
+    <script src="sidepanel.js"></script>
+</body>
+
+</html>
