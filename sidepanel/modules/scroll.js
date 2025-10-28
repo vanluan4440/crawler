@@ -7,22 +7,43 @@ import { state, setCurrentScrollTabId } from './state.js';
 import { showMessage } from './ui.js';
 
 /**
+ * Disable search controls while scrolling
+ */
+function disableSearchControls() {
+    const urlInput = document.getElementById('urlInput');
+    const goBtn = document.querySelector('.btn-go');
+    
+    if (urlInput) urlInput.disabled = true;
+    if (goBtn) goBtn.disabled = true;
+}
+
+/**
+ * Enable search controls after scrolling
+ */
+function enableSearchControls() {
+    const urlInput = document.getElementById('urlInput');
+    const goBtn = document.querySelector('.btn-go');
+    
+    if (urlInput) urlInput.disabled = false;
+    if (goBtn) goBtn.disabled = false;
+}
+
+/**
  * Start auto-scroll after page loads
  * @param {number} tabId - Tab ID to scroll
  */
 export function autoScrollAfterLoad(tabId) {
     const listener = (updatedTabId, changeInfo, tab) => {
         if (updatedTabId === tabId && changeInfo.status === 'complete') {
-            // Remove listener after page loads
             chrome.tabs.onUpdated.removeListener(listener);
             
-            // Show scroll status
             const scrollStatus = document.getElementById('scrollStatus');
             const scrollMessage = document.getElementById('scrollMessage');
             scrollStatus.style.display = 'flex';
             scrollMessage.textContent = 'Starting auto-scroll...';
             
-            // Wait a bit for content to render, then start infinite scroll
+            disableSearchControls();
+            
             setTimeout(() => {
                 scrollMessage.textContent = 'Auto-scrolling... (loading more results)';
                 
@@ -32,12 +53,12 @@ export function autoScrollAfterLoad(tabId) {
                 }).then(() => {
                     console.log('Started infinite scroll');
                     
-                    // Monitor scroll completion
                     checkScrollCompletion(tabId);
                 }).catch(err => {
                     console.error('Failed to start infinite scroll:', err);
                     scrollStatus.style.display = 'none';
                     showMessage('Failed to start auto-scroll', 'error');
+                    enableSearchControls();
                 });
             }, 2000); // Wait 2 seconds for initial content to load
         }
@@ -62,6 +83,8 @@ function checkScrollCompletion(tabId) {
             // Scroll was stopped manually
             clearInterval(checkInterval);
             document.getElementById('scrollStatus').style.display = 'none';
+            // Re-enable search controls immediately
+            enableSearchControls();
             return;
         }
         
@@ -142,12 +165,14 @@ function onScrollComplete(tabId, reason) {
             break;
     }
     
-    // Hide status after 3 seconds
+    // Hide status after 3 seconds and re-enable search controls
     setTimeout(() => {
         scrollStatus.style.display = 'none';
         scrollStatus.classList.remove('completed');
         stopBtn.style.display = 'block'; // Reset for next time
         setCurrentScrollTabId(null);
+        
+        enableSearchControls();
     }, 3000);
 }
 
@@ -168,7 +193,6 @@ export function stopScroll() {
             console.error('Failed to stop scroll:', err);
         });
         
-        // Show stopped status
         onScrollComplete(tabId, 'stopped');
         showMessage('Auto-scroll stopped', 'success');
     }
@@ -232,7 +256,6 @@ function infiniteScrollToBottom() {
         setTimeout(scrollStep, scrollDelay);
     }
     
-    // Start the scroll loop
     scrollStep();
 }
 

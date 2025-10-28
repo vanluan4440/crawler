@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Web Crawler - Side Panel</title>
+    <title>Facebook Crawler - Side Panel</title>
     <link rel="stylesheet" href="sidepanel.css">
 </head>
 
@@ -13,8 +13,8 @@
         <div class="sidepanel-header">
             <div class="header-icon">🕷️</div>
             <div class="header-text">
-                <h1>Web Crawler</h1>
-                <p>Extract & Analyze Web Data</p>
+                <h1>Facebook Crawler Tool</h1>
+                <p>Search & Export Facebook Groups to CSV</p>
             </div>
         </div>
 
@@ -30,77 +30,13 @@
                     <button id="goToUrlBtn" class="btn btn-go">🚀 Go</button>
                 </div>
             </div>
-            <div class="quick-actions">
-                <div class="action-cards">
-                    <div class="action-card" id="extractLinksCard">
-                        <div class="card-icon">🔗</div>
-                        <div class="card-content">
-                            <h3>Extract Links</h3>
-                            <p>Get all links from current page</p>
-                        </div>
-                    </div>
-                    <div class="action-card" id="extractImagesCard">
-                        <div class="card-icon">🖼️</div>
-                        <div class="card-content">
-                            <h3>Extract Images</h3>
-                            <p>Capture all images</p>
-                        </div>
-                    </div>
-                    <div class="action-card" id="extractMetaCard">
-                        <div class="card-icon">📊</div>
-                        <div class="card-content">
-                            <h3>Get Metadata</h3>
-                            <p>SEO & page info</p>
-                        </div>
-                    </div>
-                    <div class="action-card" id="fullCrawlCard">
-                        <div class="card-icon">🚀</div>
-                        <div class="card-content">
-                            <h3>Full Crawl</h3>
-                            <p>Extract everything</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
 
-            <div class="current-page">
-                <div class="page-header">
-                    <h3>Current Page</h3>
-                </div>
-                <div class="page-info">
-                    <div class="info-item">
-                        <span class="info-label">URL:</span>
-                        <span class="info-value" id="currentUrl">Loading...</span>
-                    </div>
-                    <div class="info-item">
-                        <span class="info-label">Status:</span>
-                        <span class="info-value" id="pageStatus">Ready</span>
-                    </div>
-                </div>
-            </div>
-
+            <!-- Auto-scroll Option -->
             <div class="extract-options">
-                <h3>Options</h3>
                 <div class="options-list">
                     <label class="option-item">
                         <input type="checkbox" id="autoScrollEnabled" checked>
                         <span>Auto-scroll infinitely after search</span>
-                    </label>
-                    <label class="option-item">
-                        <input type="checkbox" id="includeExternalLinks" checked>
-                        <span>Include external links</span>
-                    </label>
-                    <label class="option-item">
-                        <input type="checkbox" id="includeImages" checked>
-                        <span>Include images</span>
-                    </label>
-                    <label class="option-item">
-                        <input type="checkbox" id="includeMetadata" checked>
-                        <span>Include metadata</span>
-                    </label>
-                    <label class="option-item">
-                        <input type="checkbox" id="autoExport">
-                        <span>Auto-export results</span>
                     </label>
                 </div>
                 
@@ -113,24 +49,6 @@
                     <button id="stopScrollBtn" class="btn-stop">⏹️ Stop</button>
                 </div>
             </div>
-
-            <!-- <div class="results-preview" id="resultsPreview">
-                <h3>Results Preview</h3>
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <div class="stat-number" id="linksCount">0</div>
-                        <div class="stat-label">Links</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-number" id="imagesCount">0</div>
-                        <div class="stat-label">Images</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-number" id="metaCount">0</div>
-                        <div class="stat-label">Meta Tags</div>
-                    </div>
-                </div>
-            </div> -->
 
             <div class="export-section">
                 <button id="exportCsvBtn" class="btn btn-export">
@@ -146,13 +64,13 @@
                 <p>4. Click "Export Facebook Groups CSV"</p>
                 <p>5. CSV file downloads automatically</p>
                 <p style="margin-top: 8px; font-size: 11px; color: #64748b;">
-                    📋 CSV format: No, Group Name, Group URL
+                    📋 CSV format: Order, Group Name, Group URL
                 </p>
             </div>
         </div>
 
         <div class="sidepanel-footer">
-            <p>Web Crawler DevTools v1.0.0</p>
+            <p>Facebook Crawler Tool v1.0.0</p>
         </div>
     </div>
 

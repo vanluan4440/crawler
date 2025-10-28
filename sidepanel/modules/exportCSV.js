@@ -14,7 +14,7 @@ function extractGroupDataScript() {
     let feedContainer = document.querySelector('div[role="feed"]');
     
     if (!feedContainer) {
-        console.error("Không tìm thấy container [role='feed']!");
+        console.error("Not found container [role='feed']!");
         return { success: false, data: [], error: 'Container not found' };
     }
 
@@ -28,18 +28,15 @@ function extractGroupDataScript() {
     allLinks.forEach(link => {
         let href = link.href;
         
-        // Check if this is a group link
         if (href && href.includes('/groups/')) {
             
-            // Get title from text inside <a> tag
             let title = link.innerText;
             
-            // Filter out junk: remove "feed", "discover" links and links without title
             if (title && title.trim() !== "" && 
                 !href.includes('/feed/') && 
                 !href.includes('/discover/')) {
                 
-                // Filter duplicates (because 1 group can have 2 links: image and title)
+                // Filter duplicates (if 1 group can have 2 links: image and title)
                 if (!seenUrls.has(href)) {
                     results.push({
                         title: title.trim(),
@@ -62,7 +59,6 @@ function extractGroupDataScript() {
  */
 export async function extractAndExportFacebookGroups() {
     try {
-        // Get current active tab
         const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
         if (!tabs[0]) {
             showMessage('No active tab found', 'error');
@@ -72,7 +68,6 @@ export async function extractAndExportFacebookGroups() {
         const tabId = tabs[0].id;
         const currentUrl = tabs[0].url;
 
-        // Validate that we're on Facebook
         if (!currentUrl.includes('facebook.com')) {
             showMessage('Please navigate to Facebook first', 'error');
             return;
@@ -80,7 +75,6 @@ export async function extractAndExportFacebookGroups() {
 
         showMessage('Extracting Facebook groups...', 'success');
 
-        // Execute extraction script in page context
         const results = await chrome.scripting.executeScript({
             target: { tabId: tabId },
             func: extractGroupDataScript
@@ -103,7 +97,6 @@ export async function extractAndExportFacebookGroups() {
             return;
         }
 
-        // Export to CSV
         exportGroupsToCSV(data);
         showMessage(`Successfully exported ${data.length} groups!`, 'success');
 
@@ -118,10 +111,8 @@ export async function extractAndExportFacebookGroups() {
  * @param {Array} groups - Array of group objects {title, url}
  */
 function exportGroupsToCSV(groups) {
-    // CSV Header
     let csv = 'No,Group Name,Group URL\n';
     
-    // CSV Data rows
     groups.forEach((group, index) => {
         const no = index + 1;
         const title = escapeCSV(group.title);
@@ -129,7 +120,6 @@ function exportGroupsToCSV(groups) {
         csv += `${no},"${title}","${url}"\n`;
     });
     
-    // Create blob and download
     const csvBlob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(csvBlob);
     
