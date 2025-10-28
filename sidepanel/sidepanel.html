@@ -19,6 +19,17 @@
         </div>
 
         <div class="sidepanel-content">
+            <!-- URL Navigation -->
+            <div class="url-section">
+                <div class="section-header">
+                    <span class="section-icon">🔍</span>
+                    <h3>Input Search Keyword</h3>
+                </div>
+                <div class="input-container">
+                    <input type="text" id="urlInput" placeholder="Search on Facebook">
+                    <button id="goToUrlBtn" class="btn btn-go">🚀 Go</button>
+                </div>
+            </div>
             <div class="quick-actions">
                 <div class="action-cards">
                     <div class="action-card" id="extractLinksCard">
@@ -72,6 +83,10 @@
                 <h3>Options</h3>
                 <div class="options-list">
                     <label class="option-item">
+                        <input type="checkbox" id="autoScrollEnabled" checked>
+                        <span>Auto-scroll infinitely after search</span>
+                    </label>
+                    <label class="option-item">
                         <input type="checkbox" id="includeExternalLinks" checked>
                         <span>Include external links</span>
                     </label>
@@ -87,6 +102,15 @@
                         <input type="checkbox" id="autoExport">
                         <span>Auto-export results</span>
                     </label>
+                </div>
+                
+                <!-- Scroll Status Indicator -->
+                <div id="scrollStatus" class="scroll-status" style="display: none;">
+                    <div class="scroll-info">
+                        <span class="scroll-icon">⏳</span>
+                        <span id="scrollMessage">Auto-scrolling...</span>
+                    </div>
+                    <button id="stopScrollBtn" class="btn-stop">⏹️ Stop</button>
                 </div>
             </div>
 
@@ -131,7 +155,7 @@
         </div>
     </div>
 
-    <script src="sidepanel.js"></script>
+    <script type="module" src="sidepanel.js"></script>
 </body>
 
 </html>
