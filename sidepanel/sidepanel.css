@@ -168,6 +168,7 @@ body {
 .extract-options,
 .results-preview,
 .export-section,
+.facebook-section,
 .help-section {
     background: white;
     border-radius: 12px;
@@ -179,11 +180,39 @@ body {
 .current-page h3,
 .extract-options h3,
 .results-preview h3,
+.facebook-section h3,
 .help-section h3 {
     font-size: 14px;
     font-weight: 600;
     color: #1e293b;
     margin-bottom: 12px;
+}
+
+.facebook-section {
+    border: 2px solid #1877f2;
+    background: linear-gradient(135deg, #f0f7ff 0%, #e6f2ff 100%);
+}
+
+.facebook-section h3 {
+    color: #1877f2;
+}
+
+.section-description {
+    font-size: 12px;
+    color: #64748b;
+    margin-bottom: 12px;
+    line-height: 1.5;
+}
+
+.btn-facebook {
+    width: 100%;
+    background: linear-gradient(135deg, #1877f2 0%, #0c63d4 100%);
+    color: white;
+    border: none;
+}
+
+.btn-facebook:hover {
+    background: linear-gradient(135deg, #0c63d4 0%, #0952b8 100%);
 }
 
 .page-info {
@@ -326,10 +355,11 @@ body {
 }
 
 .export-section {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
     padding: 0;
+}
+
+.export-section .btn {
+    width: 100%;
 }
 
 .btn {

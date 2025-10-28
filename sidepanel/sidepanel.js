@@ -7,7 +7,7 @@ import { loadCurrentPageInfo, highlightCard } from './modules/ui.js';
 import { navigateToUrl } from './modules/navigation.js';
 import { stopScroll } from './modules/scroll.js';
 import { extractLinks, extractImages, extractMetadata, fullCrawl } from './modules/extraction.js';
-import { exportToJson, exportToCsv } from './modules/export.js';
+import { extractAndExportFacebookGroups } from './modules/exportCSV.js';
 
 /**
  * Initialize application
@@ -42,9 +42,8 @@ function setupEventListeners() {
         fullCrawl();
     });
 
-    // Export actions
-    document.getElementById('exportJsonBtn').addEventListener('click', exportToJson);
-    document.getElementById('exportCsvBtn').addEventListener('click', exportToCsv);
+    // Export CSV (Facebook Groups)
+    document.getElementById('exportCsvBtn').addEventListener('click', extractAndExportFacebookGroups);
     
     // URL navigation
     document.getElementById('goToUrlBtn').addEventListener('click', navigateToUrl);

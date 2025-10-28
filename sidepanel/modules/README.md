@@ -11,7 +11,8 @@ modules/
 ├── navigation.js   # URL navigation và Facebook search
 ├── scroll.js       # Auto-scroll infinite scroll
 ├── extraction.js   # Data extraction (links, images, metadata)
-└── export.js       # Export JSON và CSV
+├── export.js       # Export JSON và CSV
+└── facebook.js     # Facebook-specific data extraction
 ```
 
 ## 📋 Chi tiết từng module
@@ -119,6 +120,33 @@ Export data ra file.
 **Internal:**
 
 - `escapeCSV(text)` - Escape CSV special characters
+
+---
+
+### facebook.js
+
+Extract và export Facebook-specific data (groups, pages, etc).
+
+**Exports:**
+
+- `extractAndExportFacebookGroups()` - Extract groups từ Facebook search và export CSV
+- `getGroupCount()` - Lấy số lượng groups hiện tại (cho preview)
+
+**Features:**
+
+- Smart parsing của Facebook DOM structure
+- Filter duplicate groups
+- Remove irrelevant links (feed, discover)
+- Export với format CSV đẹp (No, Group Name, Group URL)
+- Validation Facebook URL
+
+**CSV Format:**
+
+```csv
+No,Group Name,Group URL
+1,"JavaScript Developers","https://facebook.com/groups/12345"
+2,"Web Development","https://facebook.com/groups/67890"
+```
 
 ---
 

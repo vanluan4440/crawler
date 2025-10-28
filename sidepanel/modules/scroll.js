@@ -117,13 +117,10 @@ function onScrollComplete(tabId, reason) {
     const scrollIcon = document.querySelector('.scroll-icon');
     const stopBtn = document.getElementById('stopScrollBtn');
     
-    // Add completed class to stop animations
     scrollStatus.classList.add('completed');
     
-    // Hide stop button when completed
     stopBtn.style.display = 'none';
     
-    // Update status based on reason
     switch (reason) {
         case 'completed':
             scrollIcon.textContent = '✅';
@@ -182,41 +179,37 @@ export function stopScroll() {
  * Performs infinite scroll until reaching the bottom
  */
 function infiniteScrollToBottom() {
-    // Initialize stop flag
     window.stopInfiniteScroll = false;
     
     let scrollAttempts = 0;
     let maxAttempts = 100; // Maximum scroll attempts to prevent infinite loop
     let lastHeight = 0;
     let sameHeightCount = 0;
-    let scrollDelay = 1000; // Delay between scrolls (ms)
+    let scrollDelay = 500; // Delay between scrolls
     
-    console.log('🚀 Starting infinite scroll...');
+    console.log('Starting infinite scroll...');
     
     function scrollStep() {
-        // Check if stop was requested
         if (window.stopInfiniteScroll) {
-            console.log('🛑 Scroll stopped by user. Total scrolls:', scrollAttempts);
+            console.log('Scroll stopped by user. Total scrolls:', scrollAttempts);
             return;
         }
         
-        // Get current scroll height
         const currentHeight = document.documentElement.scrollHeight;
         
-        // Check if height hasn't changed
         if (currentHeight === lastHeight) {
             sameHeightCount++;
-            console.log(`📊 Height unchanged: ${sameHeightCount}/3`);
+            console.log(`Height unchanged: ${sameHeightCount}/3`);
             
-            // If height hasn't changed for 3 consecutive attempts, we're done
+            // If height hasn't changed for 3 consecutive attempts, job done
             if (sameHeightCount >= 3) {
-                console.log('✅ Reached the end! Total scrolls:', scrollAttempts);
+                console.log('Reached the end! Total scrolls:', scrollAttempts);
                 window.scrollCompleted = true;
                 return;
             }
         } else {
-            sameHeightCount = 0; // Reset counter if height changed
-            console.log(`📈 New content loaded! Height: ${currentHeight}px`);
+            sameHeightCount = 0;
+            console.log(`New content loaded! Height: ${currentHeight}px`);
         }
         
         lastHeight = currentHeight;
@@ -224,20 +217,18 @@ function infiniteScrollToBottom() {
         
         // Stop if we've exceeded max attempts
         if (scrollAttempts >= maxAttempts) {
-            console.log('⚠️ Max scroll attempts reached:', maxAttempts);
+            console.log('Max scroll attempts reached:', maxAttempts);
             window.scrollCompleted = true;
             return;
         }
         
-        // Scroll down
         window.scrollTo({
             top: currentHeight,
             behavior: 'smooth'
         });
         
-        console.log(`⬇️ Scroll #${scrollAttempts} - Position: ${window.scrollY}px / ${currentHeight}px`);
+        console.log(`Scroll #${scrollAttempts} - Position: ${window.scrollY}px / ${currentHeight}px`);
         
-        // Continue scrolling after delay
         setTimeout(scrollStep, scrollDelay);
     }
     
