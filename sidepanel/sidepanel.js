@@ -5,7 +5,7 @@
 
 import { navigateToUrl } from './modules/navigation.js';
 import { stopScroll } from './modules/scroll.js';
-import { extractAndExportFacebookGroups } from './modules/exportCSV.js';
+import { extractAndExportFacebookPages } from './modules/exportCSV.js';
 
 /**
  * Initialize application
@@ -18,14 +18,14 @@ document.addEventListener('DOMContentLoaded', function () {
  * Setup all event listeners
  */
 function setupEventListeners() {
-    document.getElementById('exportCsvBtn').addEventListener('click', extractAndExportFacebookGroups);
-    
+    document.getElementById('exportCsvBtn').addEventListener('click', extractAndExportFacebookPages);
+
     document.getElementById('goToUrlBtn').addEventListener('click', navigateToUrl);
     document.getElementById('urlInput').addEventListener('keypress', (e) => {
         if (e.key === 'Enter') {
             navigateToUrl();
         }
     });
-    
+
     document.getElementById('stopScrollBtn').addEventListener('click', stopScroll);
 }

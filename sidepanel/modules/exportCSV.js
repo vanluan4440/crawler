@@ -12,7 +12,7 @@ import { showMessage } from './ui.js';
 function extractGroupDataScript() {
     // 1. Select main container with [role="feed"]
     let feedContainer = document.querySelector('div[role="feed"]');
-    
+
     if (!feedContainer) {
         console.error("Not found container [role='feed']!");
         return { success: false, data: [], error: 'Container not found' };
@@ -20,22 +20,23 @@ function extractGroupDataScript() {
 
     // 2. Find ALL <a> tags inside the container
     let allLinks = feedContainer.querySelectorAll('a');
-    
+
     let results = [];
     let seenUrls = new Set(); // Filter duplicates
 
     // 3. Filter out links that are actually groups
     allLinks.forEach(link => {
         let href = link.href;
-        
-        if (href && href.includes('/groups/')) {
-            
+        if (href && href.includes('https://www.facebook.com/')) {
+
             let title = link.innerText;
-            
-            if (title && title.trim() !== "" && 
-                !href.includes('/feed/') && 
-                !href.includes('/discover/')) {
-                
+
+            if (title && title.trim() !== "" &&
+                !href.includes('/feed/') &&
+                !href.includes('/discover/') &&
+                !href.includes('/groups/') &&
+                !href.includes('/search/')) {
+
                 // Filter duplicates (if 1 group can have 2 links: image and title)
                 if (!seenUrls.has(href)) {
                     results.push({
@@ -48,16 +49,16 @@ function extractGroupDataScript() {
         }
     });
 
-    console.log(`Found ${results.length} groups`);
+    console.log(`Found ${results.length} pages`);
     console.table(results);
-    
+
     return { success: true, data: results };
 }
 
 /**
- * Extract Facebook groups and export to CSV
+ * Extract Facebook pages and export to CSV
  */
-export async function extractAndExportFacebookGroups() {
+export async function extractAndExportFacebookPages() {
     try {
         const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
         if (!tabs[0]) {
@@ -73,7 +74,7 @@ export async function extractAndExportFacebookGroups() {
             return;
         }
 
-        showMessage('Extracting Facebook groups...', 'success');
+        showMessage('Extracting Facebook pages...', 'success');
 
         const results = await chrome.scripting.executeScript({
             target: { tabId: tabId },
@@ -93,41 +94,52 @@ export async function extractAndExportFacebookGroups() {
         }
 
         if (data.length === 0) {
-            showMessage('No groups found. Make sure you scrolled to load all results.', 'error');
+            showMessage('No pages found. Make sure you scrolled to load all results.', 'error');
             return;
         }
 
-        exportGroupsToCSV(data);
-        showMessage(`Successfully exported ${data.length} groups!`, 'success');
+        exportPagesToCSV(data);
+        showMessage(`Successfully exported ${data.length} pages!`, 'success');
 
     } catch (error) {
-        console.error('Error extracting Facebook groups:', error);
-        showMessage('Failed to extract groups: ' + error.message, 'error');
+        console.error('Error extracting Facebook pages:', error);
+        showMessage('Failed to extract pages: ' + error.message, 'error');
     }
 }
 
 /**
- * Export groups data to CSV file
- * @param {Array} groups - Array of group objects {title, url}
+ * Export pages data to Excel-compatible file
+ * @param {Array} pages - Array of page objects {title, url}
  */
-function exportGroupsToCSV(groups) {
-    let csv = 'No,Group Name,Group URL\n';
-    
-    groups.forEach((group, index) => {
-        const no = index + 1;
-        const title = escapeCSV(group.title);
-        const url = escapeCSV(group.url);
-        csv += `${no},"${title}","${url}"\n`;
+function exportPagesToCSV(pages) {
+    // UTF-8 BOM for Excel compatibility
+    let csv = '\uFEFF';
+    csv += 'No,Page Name,Page URL\n';
+
+    // Chỉ export các url có dạng https://www.facebook.com/USERNAME (không chứa thêm slash hoặc đoạn sau)
+    let exportIndex = 1;
+    pages.forEach((page) => {
+        // Regex: bắt đúng https://www.facebook.com/<username> (không thêm gì sau)
+        // <username> phải có ít nhất 1 ký tự, chỉ nhận dạng đầu tiên sau domain và không có thêm dấu slash
+        const validUrl = page.url.match(/^https:\/\/www\.facebook\.com\/[A-Za-z0-9.\-_]+$/);
+        if (validUrl) {
+            const title = escapeCSV(page.title);
+            const url = `=HYPERLINK("${page.url}")`;
+            csv += `${exportIndex},"${title}",${url}\n`;
+            exportIndex++;
+        }
     });
-    
-    const csvBlob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(csvBlob);
-    
+
+
+    // Use Excel MIME type so Excel opens it correctly
+    const blob = new Blob([csv], { type: 'application/vnd.ms-excel' });
+    const url = URL.createObjectURL(blob);
+
     const link = document.createElement('a');
     link.href = url;
-    link.download = `facebook-groups-${Date.now()}.csv`;
+    link.download = `facebook-pages-${Date.now()}.xls`;
     link.click();
-    
+
     URL.revokeObjectURL(url);
 }
 
@@ -153,19 +165,19 @@ export async function getGroupCount() {
             func: () => {
                 const feedContainer = document.querySelector('div[role="feed"]');
                 if (!feedContainer) return 0;
-                
-                const links = feedContainer.querySelectorAll('a[href*="/groups/"]');
+
+                const links = feedContainer.querySelectorAll('a[href*="https://www.facebook.com/"]');
                 const seenUrls = new Set();
-                
+
                 links.forEach(link => {
-                    if (link.href && 
-                        link.innerText.trim() !== "" && 
-                        !link.href.includes('/feed/') && 
+                    if (link.href &&
+                        link.innerText.trim() !== "" &&
+                        !link.href.includes('/feed/') &&
                         !link.href.includes('/discover/')) {
                         seenUrls.add(link.href);
                     }
                 });
-                
+
                 return seenUrls.size;
             }
         });

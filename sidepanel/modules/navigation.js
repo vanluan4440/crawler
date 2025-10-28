@@ -12,19 +12,19 @@ import { autoScrollAfterLoad } from './scroll.js';
  */
 export async function navigateToUrl() {
     const urlInput = document.getElementById('urlInput');
-    let baseUrl = 'https://www.facebook.com/search/groups?q=';
+    let baseUrl = 'https://www.facebook.com/search/pages?q=';
     let fullUrl = urlInput.value.trim();
-    
+
     if (!fullUrl) {
         showMessage('Please enter a search keyword', 'error');
         return;
     }
-    
+
     // Add baseUrl if not a full URL
     if (!fullUrl.startsWith('http://') && !fullUrl.startsWith('https://')) {
         fullUrl = baseUrl + encodeURIComponent(fullUrl);
     }
-    
+
     // Validate URL
     try {
         new URL(fullUrl);
@@ -32,7 +32,7 @@ export async function navigateToUrl() {
         showMessage('Invalid URL format', 'error');
         return;
     }
-    
+
     // Navigate to URL
     try {
         const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
@@ -41,7 +41,7 @@ export async function navigateToUrl() {
             await chrome.tabs.update(tabId, { url: fullUrl });
             showMessage('Searching Facebook...', 'success');
             urlInput.value = '';
-            
+
             // Check if auto-scroll is enabled
             const autoScrollEnabled = document.getElementById('autoScrollEnabled').checked;
             if (autoScrollEnabled) {

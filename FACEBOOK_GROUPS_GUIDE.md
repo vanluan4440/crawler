@@ -1,26 +1,26 @@
-# Facebook Groups Export Guide
+# Facebook pages Export Guide
 
-Hướng dẫn chi tiết cách export danh sách Facebook groups ra CSV.
+Hướng dẫn chi tiết cách export danh sách Facebook pages ra CSV.
 
 ## 🎯 Tính năng
 
 Extension cho phép bạn:
 
-- Tìm kiếm groups trên Facebook
+- Tìm kiếm pages trên Facebook
 - Tự động scroll load tất cả kết quả
-- Extract thông tin groups (tên, URL)
+- Extract thông tin pages (tên, URL)
 - Export ra file CSV đẹp
 
 ## 📋 Quy trình sử dụng
 
-### Bước 1: Tìm kiếm groups trên Facebook
+### Bước 1: Tìm kiếm pages trên Facebook
 
 1. Mở extension Side Panel
 2. Nhập keyword muốn tìm (ví dụ: "javascript", "web development")
 3. Bấm nút **"🚀 Go"**
 4. Extension sẽ tự động mở trang:
    ```
-   https://www.facebook.com/search/groups?q=<keyword>
+   https://www.facebook.com/search/pages?q=<keyword>
    ```
 
 ### Bước 2: Auto-scroll (tự động)
@@ -28,7 +28,7 @@ Extension cho phép bạn:
 - Nếu checkbox **"Auto-scroll infinitely after search"** được bật:
 
   - Extension tự động scroll xuống cuối
-  - Load tất cả groups có thể
+  - Load tất cả pages có thể
   - Hiển thị status: "Auto-scrolling... (loading more results)"
   - Khi xong: "✅ Scroll completed! Reached the end."
 
@@ -36,11 +36,11 @@ Extension cho phép bạn:
 
 ### Bước 3: Export to CSV
 
-1. Sau khi scroll xong (hoặc load đủ groups)
-2. Bấm nút **"📊 Export Facebook Groups"**
+1. Sau khi scroll xong (hoặc load đủ pages)
+2. Bấm nút **"📊 Export Facebook pages"**
 3. Extension sẽ:
-   - Parse DOM để tìm tất cả groups trong `[role="feed"]`
-   - Filter ra groups hợp lệ
+   - Parse DOM để tìm tất cả pages trong `[role="feed"]`
+   - Filter ra pages hợp lệ
    - Loại bỏ duplicate
    - Export ra CSV
 
@@ -50,9 +50,9 @@ File CSV sẽ tự động download với format:
 
 ```csv
 No,Group Name,Group URL
-1,"JavaScript Developers Vietnam","https://www.facebook.com/groups/123456789"
-2,"Web Development Tips","https://www.facebook.com/groups/987654321"
-3,"React & Node.js Community","https://www.facebook.com/groups/456789123"
+1,"JavaScript Developers Vietnam","https://www.facebook.com/pages/123456789"
+2,"Web Development Tips","https://www.facebook.com/pages/987654321"
+3,"React & Node.js Community","https://www.facebook.com/pages/456789123"
 ```
 
 ## 🔍 Cách hoạt động (Technical)
@@ -67,7 +67,7 @@ div[role="feed"]
 feedContainer.querySelectorAll('a')
 
 // 3. Filter ra group links
-href.includes('/groups/')
+href.includes('/pages/')
 
 // 4. Loại bỏ rác
 - href không chứa '/feed/'
@@ -105,13 +105,13 @@ Extension tự động:
 
 1. **Đợi scroll hoàn thành**
 
-   - Nếu dừng sớm → thiếu groups
+   - Nếu dừng sớm → thiếu pages
    - Nếu đợi xong → đầy đủ nhất
 
 2. **Check console logs**
 
    - Mở DevTools (F12) → Console
-   - Xem: "Đã tìm thấy X groups"
+   - Xem: "Đã tìm thấy X pages"
    - Verify số lượng trước khi export
 
 3. **Tìm kiếm hiệu quả**
@@ -127,18 +127,18 @@ Extension tự động:
 
 ## 🐛 Troubleshooting
 
-### "No groups found"
+### "No pages found"
 
 **Nguyên nhân:**
 
 - Chưa scroll đủ
-- Không phải trang search groups
+- Không phải trang search pages
 - DOM structure thay đổi
 
 **Giải pháp:**
 
-- Đảm bảo URL có dạng: `facebook.com/search/groups?q=...`
-- Scroll xuống để load groups
+- Đảm bảo URL có dạng: `facebook.com/search/pages?q=...`
+- Scroll xuống để load pages
 - Check console logs để debug
 
 ### "Container not found"
@@ -173,9 +173,9 @@ Extension tự động:
 3. Click "Go"
 4. Wait for auto-scroll to complete
 5. See: "✅ Scroll completed! Reached the end."
-6. Click "Export Facebook Groups"
-7. See message: "Successfully exported 45 groups!"
-8. Open CSV file: facebook-groups-1234567890.csv
+6. Click "Export Facebook pages"
+7. See message: "Successfully exported 45 pages!"
+8. Open CSV file: facebook-pages-1234567890.csv
 9. Import to Excel/Sheets for analysis
 ```
 
@@ -183,10 +183,10 @@ Extension tự động:
 
 Sau khi có file CSV, bạn có thể:
 
-- 📊 **Analyze** - Thống kê, phân loại groups
+- 📊 **Analyze** - Thống kê, phân loại pages
 - 📧 **Outreach** - Contact admin để promote
 - 🔗 **Share** - Chia sẻ list với team
-- 📈 **Track** - Theo dõi groups theo thời gian
+- 📈 **Track** - Theo dõi pages theo thời gian
 - 🤖 **Automate** - Feed vào tools khác
 
 ## 🔄 Updates & Maintenance
@@ -198,7 +198,7 @@ File cần update: `sidepanel/modules/facebook.js`
 Hàm cần kiểm tra:
 
 - `extractGroupDataScript()` - DOM selectors
-- Filter logic - `/groups/` pattern
+- Filter logic - `/pages/` pattern
 
 ## 📞 Support
 

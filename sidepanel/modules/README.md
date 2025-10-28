@@ -55,7 +55,7 @@ Xử lý navigation và Facebook search.
 
 **Features:**
 
-- Auto-add `https://www.facebook.com/search/groups?q=` prefix
+- Auto-add `https://www.facebook.com/search/pages?q=` prefix
 - URL validation
 - Tự động trigger auto-scroll nếu enabled
 
@@ -125,17 +125,17 @@ Export data ra file.
 
 ### facebook.js
 
-Extract và export Facebook-specific data (groups, pages, etc).
+Extract và export Facebook-specific data (pages, pages, etc).
 
 **Exports:**
 
-- `extractAndExportFacebookGroups()` - Extract groups từ Facebook search và export CSV
-- `getGroupCount()` - Lấy số lượng groups hiện tại (cho preview)
+- `extractAndExportFacebookpages()` - Extract pages từ Facebook search và export CSV
+- `getGroupCount()` - Lấy số lượng pages hiện tại (cho preview)
 
 **Features:**
 
 - Smart parsing của Facebook DOM structure
-- Filter duplicate groups
+- Filter duplicate pages
 - Remove irrelevant links (feed, discover)
 - Export với format CSV đẹp (No, Group Name, Group URL)
 - Validation Facebook URL
@@ -144,8 +144,8 @@ Extract và export Facebook-specific data (groups, pages, etc).
 
 ```csv
 No,Group Name,Group URL
-1,"JavaScript Developers","https://facebook.com/groups/12345"
-2,"Web Development","https://facebook.com/groups/67890"
+1,"JavaScript Developers","https://facebook.com/pages/12345"
+2,"Web Development","https://facebook.com/pages/67890"
 ```
 
 ---
