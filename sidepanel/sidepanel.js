@@ -10,7 +10,8 @@ import {
     loadBatchFromCurrentPage, 
     openNextBatch, 
     closeCurrentBatchTabs, 
-    resetBatchProcess 
+    resetBatchProcess,
+    clickMessageButtonOnAllTabs
 } from './modules/batchMessaging.js';
 
 /**
@@ -38,6 +39,7 @@ function setupEventListeners() {
     // Batch messaging event listeners
     document.getElementById('loadBatchBtn').addEventListener('click', loadBatchFromCurrentPage);
     document.getElementById('openBatchBtn').addEventListener('click', openNextBatch);
+    document.getElementById('clickMessageBtn').addEventListener('click', clickMessageButtonOnAllTabs);
     document.getElementById('closeBatchBtn').addEventListener('click', closeCurrentBatchTabs);
     document.getElementById('resetBatchBtn').addEventListener('click', resetBatchProcess);
 }

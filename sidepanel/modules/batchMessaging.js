@@ -187,6 +187,7 @@ function updateBatchUI() {
 
     // Update button states
     const openBatchBtn = document.getElementById('openBatchBtn');
+    const clickMessageBtn = document.getElementById('clickMessageBtn');
     const resetBatchBtn = document.getElementById('resetBatchBtn');
     const closeBatchBtn = document.getElementById('closeBatchBtn');
 
@@ -199,6 +200,13 @@ function updateBatchUI() {
                 '⏳ Opening tabs...' : 
                 `🚀 Open Next Batch (5 tabs)`;
         }
+    }
+
+    if (clickMessageBtn) {
+        clickMessageBtn.disabled = batchState.openedTabIds.length === 0 || state.isProcessing;
+        clickMessageBtn.textContent = state.isProcessing ? 
+            '⏳ Clicking buttons...' : 
+            '💬 Click "Nhắn tin" Button (Step 1)';
     }
 
     if (resetBatchBtn) {
@@ -215,6 +223,142 @@ function updateBatchUI() {
  */
 function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+/**
+ * Click "Nhắn tin" button on all opened tabs
+ * Step 1: Find and click the message button
+ */
+export async function clickMessageButtonOnAllTabs() {
+    if (batchState.openedTabIds.length === 0) {
+        showMessage('No tabs are currently open. Open a batch first.', 'error');
+        return;
+    }
+
+    if (batchState.isProcessing) {
+        showMessage('Please wait, currently processing...', 'error');
+        return;
+    }
+
+    batchState.isProcessing = true;
+    updateBatchUI();
+
+    try {
+        let successCount = 0;
+        let failCount = 0;
+
+        showMessage(`Finding "Nhắn tin" button on ${batchState.openedTabIds.length} tabs...`, 'success');
+
+        for (let i = 0; i < batchState.openedTabIds.length; i++) {
+            const tabId = batchState.openedTabIds[i];
+            
+            try {
+                // Execute script to find and click message button
+                const results = await chrome.scripting.executeScript({
+                    target: { tabId: tabId },
+                    func: findAndClickMessageButtonScript
+                });
+
+                if (results && results[0] && results[0].result) {
+                    const { success, message, buttonText } = results[0].result;
+                    
+                    if (success) {
+                        successCount++;
+                        console.log(`Tab ${i + 1}: Successfully clicked "${buttonText}" button`);
+                    } else {
+                        failCount++;
+                        console.log(`Tab ${i + 1}: Failed - ${message}`);
+                    }
+                } else {
+                    failCount++;
+                    console.log(`Tab ${i + 1}: No result returned`);
+                }
+
+                // Small delay between tabs
+                await sleep(500);
+
+            } catch (error) {
+                failCount++;
+                console.error(`Tab ${i + 1}: Error - ${error.message}`);
+            }
+        }
+
+        // Show summary
+        if (successCount > 0) {
+            showMessage(
+                `✅ Clicked message button on ${successCount}/${batchState.openedTabIds.length} tabs` +
+                (failCount > 0 ? ` (${failCount} failed)` : ''),
+                'success'
+            );
+        } else {
+            showMessage(`❌ Failed to click button on all tabs. Check console for details.`, 'error');
+        }
+
+    } catch (error) {
+        console.error('Error clicking message buttons:', error);
+        showMessage('Failed to click message buttons: ' + error.message, 'error');
+    } finally {
+        batchState.isProcessing = false;
+        updateBatchUI();
+    }
+}
+
+/**
+ * Script that runs in page context to find and click "Nhắn tin" button
+ * Conditions:
+ * 1. Must be a button (role="button")
+ * 2. Must contain text "Nhắn tin" or "Message"
+ */
+function findAndClickMessageButtonScript() {
+    try {
+        // Find all buttons on the page
+        const allButtons = document.querySelectorAll('[role="button"]');
+        
+        console.log(`Found ${allButtons.length} buttons with role="button"`);
+
+        // Search for button containing "Nhắn tin" or "Message"
+        let messageButton = null;
+        let buttonText = '';
+
+        for (const button of allButtons) {
+            const text = button.textContent || button.innerText || '';
+            
+            // Check if button contains "Nhắn tin" or "Message"
+            if (text.includes('Nhắn tin') || text.includes('Message')) {
+                messageButton = button;
+                buttonText = text.trim();
+                console.log('Found message button:', buttonText);
+                break;
+            }
+        }
+
+        if (!messageButton) {
+            console.error('Message button not found');
+            return {
+                success: false,
+                message: 'Button with "Nhắn tin" or "Message" not found',
+                buttonText: null
+            };
+        }
+
+        // Click the button
+        messageButton.click();
+        console.log('Clicked message button successfully');
+
+        return {
+            success: true,
+            message: 'Button clicked successfully',
+            buttonText: buttonText
+        };
+
+    } catch (error) {
+        console.error('Error in findAndClickMessageButtonScript:', error);
+        return {
+            success: false,
+            message: error.message,
+            buttonText: null
+        };
+    }
 }
 
 /**
