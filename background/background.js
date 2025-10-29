@@ -105,7 +105,7 @@ async function handleDebuggerMessage(request, tabId) {
       clickCount: 1
     });
 
-    await sleep(500); // Increased from 300ms to 500ms
+    await sleep(1000);
 
     // Step 2: Insert text using Input.insertText (fast and efficient)
     console.log(`[Debugger] Inserting text: "${messageText.substring(0, 50)}..."`);
@@ -114,34 +114,9 @@ async function handleDebuggerMessage(request, tabId) {
       text: messageText
     });
 
-    await sleep(800); // Increased from 500ms to 800ms
+    await sleep(1200); // Wait for text to be inserted
 
-    // Step 3: Press Enter to send message
-    console.log(`[Debugger] Pressing Enter to send...`);
-    
-    // Send Enter key down
-    await sendDebuggerCommand(tabId, 'Input.dispatchKeyEvent', {
-      type: 'keyDown',
-      windowsVirtualKeyCode: 13,
-      nativeVirtualKeyCode: 13,
-      key: 'Enter',
-      code: 'Enter'
-    });
-
-    await sleep(50);
-
-    // Send Enter key up
-    await sendDebuggerCommand(tabId, 'Input.dispatchKeyEvent', {
-      type: 'keyUp',
-      windowsVirtualKeyCode: 13,
-      nativeVirtualKeyCode: 13,
-      key: 'Enter',
-      code: 'Enter'
-    });
-
-    await sleep(100);
-
-    // Detach debugger
+    // Detach debugger before finding send button
     await new Promise((resolve) => {
       chrome.debugger.detach({ tabId }, () => {
         console.log(`[Debugger] Detached from tab ${tabId}`);
@@ -149,9 +124,42 @@ async function handleDebuggerMessage(request, tabId) {
       });
     });
 
+    await sleep(500);
+
+    // Step 3: Find and click Send button
+    console.log(`[Debugger] Finding and clicking Send button...`);
+    
+    const clickResult = await chrome.scripting.executeScript({
+      target: { tabId: tabId },
+      func: () => {
+        // Find send button with aria-label matching both English and Vietnamese
+        const sendButton = document.querySelector('div[role="button"][aria-label="Press enter to send"]') ||
+                          document.querySelector('div[role="button"][aria-label="Nhấn Enter để gửi"]');
+        
+        if (sendButton) {
+          console.log('Found send button, clicking...');
+          sendButton.click();
+          return { success: true, message: 'Send button clicked' };
+        } else {
+          console.error('Send button not found');
+          return { success: false, error: 'Send button not found' };
+        }
+      }
+    });
+
+    const clickSuccess = clickResult?.[0]?.result?.success;
+    
+    if (!clickSuccess) {
+      return {
+        success: false,
+        error: 'Failed to click send button',
+        errorDetails: clickResult?.[0]?.result?.error || 'Button not found'
+      };
+    }
+
     return {
       success: true,
-      message: 'Message sent successfully via debugger'
+      message: 'Message sent successfully'
     };
 
   } catch (error) {

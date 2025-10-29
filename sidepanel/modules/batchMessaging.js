@@ -204,6 +204,7 @@ function updateBatchUI() {
                 '⏳ Opening tabs...' : 
                 `🚀 Open Next Batch (5 tabs)`;
         }
+
     }
 
     if (clickMessageBtn) {
