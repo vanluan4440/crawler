@@ -47,46 +47,30 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 async function handleDebuggerMessage(request, tabId) {
   const { inputX, inputY, messageText } = request;
   
-  console.log(`[Debugger] Starting handleDebuggerMessage for tab ${tabId}`);
-  console.log(`[Debugger] Coordinates: (${inputX}, ${inputY})`);
-  console.log(`[Debugger] Message length: ${messageText?.length || 0} chars`);
-  
   try {
-    console.log(`[Debugger] Attaching to tab ${tabId}...`);
-    
-    // Try to detach first in case already attached
+    // Detach any existing debugger
     try {
       await new Promise(resolve => {
-        chrome.debugger.detach({ tabId }, () => {
-          resolve();
-        });
+        chrome.debugger.detach({ tabId }, () => resolve());
       });
-      console.log(`[Debugger] Detached any existing debugger`);
-    } catch (e) {
-      // Ignore detach errors
-    }
+    } catch (e) {}
     
     await sleep(100);
     
-    // Attach debugger to tab
+    // Attach debugger
     await new Promise((resolve, reject) => {
       chrome.debugger.attach({ tabId }, '1.3', () => {
         if (chrome.runtime.lastError) {
-          console.error(`[Debugger] Attach failed:`, chrome.runtime.lastError);
           reject(new Error(chrome.runtime.lastError.message));
         } else {
-          console.log(`[Debugger] Attached to tab ${tabId} successfully`);
           resolve();
         }
       });
     });
 
-    // Small delay to ensure debugger is ready
     await sleep(200);
 
-    // Step 1: Click to focus the input (simulate mouse press + release)
-    console.log(`[Debugger] Clicking at (${inputX}, ${inputY}) to focus input...`);
-    
+    // Click to focus input
     await sendDebuggerCommand(tabId, 'Input.dispatchMouseEvent', {
       type: 'mousePressed',
       x: inputX,
@@ -107,82 +91,53 @@ async function handleDebuggerMessage(request, tabId) {
 
     await sleep(1000);
 
-    // Step 2: Insert text using Input.insertText (fast and efficient)
-    console.log(`[Debugger] Inserting text: "${messageText.substring(0, 50)}..."`);
-    
+    // Insert text
     await sendDebuggerCommand(tabId, 'Input.insertText', {
       text: messageText
     });
 
-    await sleep(1200); // Wait for text to be inserted
+    await sleep(1200);
 
-    // Detach debugger before finding send button
+    // Detach debugger
     await new Promise((resolve) => {
-      chrome.debugger.detach({ tabId }, () => {
-        console.log(`[Debugger] Detached from tab ${tabId}`);
-        resolve();
-      });
+      chrome.debugger.detach({ tabId }, () => resolve());
     });
 
     await sleep(500);
 
-    // Step 3: Find and click Send button
-    console.log(`[Debugger] Finding and clicking Send button...`);
-    
+    // Find and click send button
     const clickResult = await chrome.scripting.executeScript({
       target: { tabId: tabId },
       func: () => {
-        // Find send button with aria-label matching both English and Vietnamese
         const sendButton = document.querySelector('div[role="button"][aria-label="Press enter to send"]') ||
                           document.querySelector('div[role="button"][aria-label="Nhấn Enter để gửi"]');
         
         if (sendButton) {
-          console.log('Found send button, clicking...');
           sendButton.click();
-          return { success: true, message: 'Send button clicked' };
-        } else {
-          console.error('Send button not found');
-          return { success: false, error: 'Send button not found' };
+          return { success: true };
         }
+        return { success: false };
       }
     });
 
     const clickSuccess = clickResult?.[0]?.result?.success;
     
     if (!clickSuccess) {
-      return {
-        success: false,
-        error: 'Failed to click send button',
-        errorDetails: clickResult?.[0]?.result?.error || 'Button not found'
-      };
+      return { success: false, error: 'Send button not found' };
     }
 
-    return {
-      success: true,
-      message: 'Message sent successfully'
-    };
+    return { success: true };
 
   } catch (error) {
-    console.error(`[Debugger] Error in handleDebuggerMessage:`, error);
-    console.error(`[Debugger] Error stack:`, error.stack);
+    console.error('Debugger error:', error);
     
-    // Make sure to detach on error
     try {
       await new Promise(resolve => {
-        chrome.debugger.detach({ tabId }, () => {
-          console.log(`[Debugger] Detached after error`);
-          resolve();
-        });
+        chrome.debugger.detach({ tabId }, () => resolve());
       });
-    } catch (e) {
-      console.error(`[Debugger] Detach error:`, e);
-    }
+    } catch (e) {}
 
-    return {
-      success: false,
-      error: error.message || 'Unknown error in debugger handler',
-      errorDetails: error.toString()
-    };
+    return { success: false, error: error.message };
   }
 }
 

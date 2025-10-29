@@ -80,16 +80,11 @@ export async function openNextBatch() {
             const page = currentBatch[i];
             const tab = await chrome.tabs.create({
                 url: page.url,
-                active: false // All tabs open in background, stay on current tab
+                active: false
             });
             batchState.openedTabIds.push(tab.id);
-            
-            // Small delay between tab creations to avoid overwhelming the browser
             await sleep(300);
         }
-        
-        console.log(`✅ All ${currentBatch.length} tabs opened in background`);
-        console.log(`Current tab remains active, ready to send messages`);
 
 
         // Update index for next batch
@@ -126,8 +121,7 @@ export async function closeCurrentBatchTabs() {
             try {
                 await chrome.tabs.remove(tabId);
             } catch (e) {
-                // Tab might already be closed by user
-                console.log('Tab already closed:', tabId);
+                // Tab already closed by user
             }
         }
         batchState.openedTabIds = [];
@@ -275,26 +269,21 @@ export async function clickMessageButtonOnAllTabs() {
                 });
 
                 if (results && results[0] && results[0].result) {
-                    const { success, message, buttonText } = results[0].result;
-                    
+                    const { success } = results[0].result;
                     if (success) {
                         successCount++;
-                        console.log(`Tab ${i + 1}: Successfully clicked "${buttonText}" button`);
                     } else {
                         failCount++;
-                        console.log(`Tab ${i + 1}: Failed - ${message}`);
                     }
                 } else {
                     failCount++;
-                    console.log(`Tab ${i + 1}: No result returned`);
                 }
 
-                // Small delay between tabs
                 await sleep(500);
 
             } catch (error) {
                 failCount++;
-                console.error(`Tab ${i + 1}: Error - ${error.message}`);
+                console.error(`Tab ${i + 1} error:`, error.message);
             }
         }
 
@@ -326,53 +315,26 @@ export async function clickMessageButtonOnAllTabs() {
  */
 function findAndClickMessageButtonScript() {
     try {
-        // Find all buttons on the page
         const allButtons = document.querySelectorAll('[role="button"]');
-        
-        console.log(`Found ${allButtons.length} buttons with role="button"`);
-
-        // Search for button containing "Nhắn tin" or "Message"
         let messageButton = null;
-        let buttonText = '';
 
         for (const button of allButtons) {
             const text = button.textContent || button.innerText || '';
-            
-            // Check if button contains "Nhắn tin" or "Message"
             if (text.includes('Nhắn tin') || text.includes('Message')) {
                 messageButton = button;
-                buttonText = text.trim();
-                console.log('Found message button:', buttonText);
                 break;
             }
         }
 
         if (!messageButton) {
-            console.error('Message button not found');
-            return {
-                success: false,
-                message: 'Button with "Nhắn tin" or "Message" not found',
-                buttonText: null
-            };
+            return { success: false };
         }
 
-        // Click the button
         messageButton.click();
-        console.log('Clicked message button successfully');
-
-        return {
-            success: true,
-            message: 'Button clicked successfully',
-            buttonText: buttonText
-        };
+        return { success: true };
 
     } catch (error) {
-        console.error('Error in findAndClickMessageButtonScript:', error);
-        return {
-            success: false,
-            message: error.message,
-            buttonText: null
-        };
+        return { success: false };
     }
 }
 
@@ -413,9 +375,6 @@ export async function typeAndSendMessageOnAllTabs() {
             const tabId = batchState.openedTabIds[i];
             
             try {
-                console.log(`Tab ${i + 1}: Finding input box coordinates...`);
-                
-                // Step 1: Execute script to find input box and get coordinates
                 const results = await chrome.scripting.executeScript({
                     target: { tabId: tabId },
                     func: findInputBoxCoordinates
@@ -423,57 +382,43 @@ export async function typeAndSendMessageOnAllTabs() {
 
                 if (!results || !results[0] || !results[0].result) {
                     failCount++;
-                    console.log(`Tab ${i + 1}: ❌ Failed to find input box`);
                     continue;
                 }
 
-                const { success, inputX, inputY, error } = results[0].result;
+                const { success, inputX, inputY } = results[0].result;
                 
                 if (!success) {
                     failCount++;
-                    console.log(`Tab ${i + 1}: ❌ ${error}`);
                     continue;
                 }
 
-                console.log(`Tab ${i + 1}: Found input at (${inputX}, ${inputY})`);
-
-                // Step 2: Send message to background to use debugger API
                 let response;
                 try {
                     response = await chrome.runtime.sendMessage({
                         action: 'sendMessageViaDebugger',
-                        tabId: tabId,  // Pass tabId explicitly
+                        tabId: tabId,
                         inputX: inputX,
                         inputY: inputY,
                         messageText: messageTemplate
                     });
-                    console.log(`Tab ${i + 1}: Received response from background:`, response);
                 } catch (sendError) {
                     failCount++;
-                    console.error(`Tab ${i + 1}: ❌ Failed to send message to background:`, sendError);
+                    console.error(`Tab ${i + 1} send error:`, sendError);
                     continue;
                 }
 
                 if (response && response.success) {
                     successCount++;
-                    console.log(`Tab ${i + 1}: ✅ Message sent successfully via debugger`);
                 } else {
                     failCount++;
-                    const errorMsg = response?.error || 'Unknown error';
-                    const errorDetails = response?.errorDetails || '';
-                    console.error(`Tab ${i + 1}: ❌ Failed - ${errorMsg}`);
-                    if (errorDetails) {
-                        console.error(`Tab ${i + 1}: Error details - ${errorDetails}`);
-                    }
+                    console.error(`Tab ${i + 1} failed:`, response?.error);
                 }
 
-                // Delay between tabs to avoid being flagged as spam
                 await sleep(2500);
 
             } catch (error) {
                 failCount++;
-                console.error(`Tab ${i + 1}: ❌ Exception in loop:`, error);
-                console.error(`Tab ${i + 1}: Error stack:`, error.stack);
+                console.error(`Tab ${i + 1} error:`, error);
             }
         }
 
@@ -504,114 +449,58 @@ export async function typeAndSendMessageOnAllTabs() {
  */
 function findInputBoxCoordinates() {
     try {
-        console.log('Finding message input box...');
-        
-        // Find textbox with aria-label "Tin nhắn" or "Message"
         const allTextboxes = document.querySelectorAll('[role="textbox"]');
-        console.log(`Found ${allTextboxes.length} textboxes`);
-        
         let messageTextbox = null;
         
         for (const textbox of allTextboxes) {
             const ariaLabel = textbox.getAttribute('aria-label') || '';
-            console.log('Checking textbox with aria-label:', ariaLabel);
-            
             if (ariaLabel.includes('Tin nhắn') || ariaLabel.includes('Message')) {
                 messageTextbox = textbox;
-                console.log('✅ Found message textbox');
                 break;
             }
         }
         
         if (!messageTextbox) {
-            // Try alternative selectors for contenteditable
             const contentEditables = document.querySelectorAll('[contenteditable="true"]');
-            console.log(`Found ${contentEditables.length} contenteditable elements`);
-            
             for (const elem of contentEditables) {
                 const ariaLabel = elem.getAttribute('aria-label') || '';
                 if (ariaLabel.includes('Tin nhắn') || ariaLabel.includes('Message')) {
                     messageTextbox = elem;
-                    console.log('✅ Found message textbox (contenteditable)');
                     break;
                 }
             }
         }
         
         if (!messageTextbox) {
-            return {
-                success: false,
-                error: 'Message textbox not found. Make sure chat dialog is open.'
-            };
+            return { success: false };
         }
         
-        // IMPORTANT: Focus the window first (especially for active tabs)
         try {
             window.focus();
-            console.log('Window focused');
-        } catch (e) {
-            console.log('Could not focus window:', e);
-        }
+        } catch (e) {}
         
-        // IMPORTANT: Scroll element into view to ensure it's visible
-        // This is especially important for active tabs
-        console.log('Scrolling element into view...');
         messageTextbox.scrollIntoView({
             behavior: 'instant',
             block: 'center',
             inline: 'center'
         });
         
-        // Small delay to let scroll complete
-        const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
-        
-        // Return a promise to allow async delay
         return new Promise((resolve) => {
             setTimeout(() => {
-                // Get bounding rectangle AFTER scrolling
                 const rect = messageTextbox.getBoundingClientRect();
-                
-                // Calculate center coordinates (relative to viewport)
                 const inputX = rect.left + (rect.width / 2);
                 const inputY = rect.top + (rect.height / 2);
-                
-                console.log(`✅ Input box found at (${inputX}, ${inputY})`);
-                console.log(`   Rect: left=${rect.left}, top=${rect.top}, width=${rect.width}, height=${rect.height}`);
-                
-                // Verify coordinates are valid (within viewport)
-                const isValid = inputX > 0 && inputY > 0 && 
-                               inputX < window.innerWidth && 
-                               inputY < window.innerHeight;
-                
-                if (!isValid) {
-                    console.warn('⚠️ Coordinates might be out of viewport bounds');
-                    console.log(`   Viewport: ${window.innerWidth}x${window.innerHeight}`);
-                }
                 
                 resolve({
                     success: true,
                     inputX: Math.round(inputX),
-                    inputY: Math.round(inputY),
-                    rect: {
-                        left: rect.left,
-                        top: rect.top,
-                        width: rect.width,
-                        height: rect.height
-                    },
-                    viewport: {
-                        width: window.innerWidth,
-                        height: window.innerHeight
-                    }
+                    inputY: Math.round(inputY)
                 });
-            }, 300); // Wait 300ms after scroll
+            }, 300);
         });
         
     } catch (error) {
-        console.error('Error finding input box:', error);
-        return {
-            success: false,
-            error: error.message
-        };
+        return { success: false };
     }
 }
 
@@ -674,21 +563,20 @@ export async function loadBatchFromCurrentPage() {
  * This function runs in the page context
  */
 function extractGroupDataScript() {
-    let feedContainer = document.querySelector('div[role="feed"]');
+    const feedContainer = document.querySelector('div[role="feed"]');
 
     if (!feedContainer) {
-        console.error("Not found container [role='feed']!");
         return { success: false, data: [], error: 'Container not found' };
     }
 
-    let allLinks = feedContainer.querySelectorAll('a');
-    let results = [];
-    let seenUrls = new Set();
+    const allLinks = feedContainer.querySelectorAll('a');
+    const results = [];
+    const seenUrls = new Set();
 
     allLinks.forEach(link => {
-        let href = link.href;
+        const href = link.href;
         if (href && href.includes('https://www.facebook.com/')) {
-            let title = link.innerText;
+            const title = link.innerText;
 
             if (title && title.trim() !== "" &&
                 !href.includes('/feed/') &&
@@ -707,7 +595,6 @@ function extractGroupDataScript() {
         }
     });
 
-    console.log(`Found ${results.length} pages`);
     return { success: true, data: results };
 }
 
