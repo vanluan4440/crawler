@@ -11,7 +11,8 @@ import {
     openNextBatch, 
     closeCurrentBatchTabs, 
     resetBatchProcess,
-    clickMessageButtonOnAllTabs
+    clickMessageButtonOnAllTabs,
+    typeAndSendMessageOnAllTabs
 } from './modules/batchMessaging.js';
 
 /**
@@ -40,6 +41,21 @@ function setupEventListeners() {
     document.getElementById('loadBatchBtn').addEventListener('click', loadBatchFromCurrentPage);
     document.getElementById('openBatchBtn').addEventListener('click', openNextBatch);
     document.getElementById('clickMessageBtn').addEventListener('click', clickMessageButtonOnAllTabs);
+    document.getElementById('sendMessageBtn').addEventListener('click', typeAndSendMessageOnAllTabs);
     document.getElementById('closeBatchBtn').addEventListener('click', closeCurrentBatchTabs);
     document.getElementById('resetBatchBtn').addEventListener('click', resetBatchProcess);
+
+    // Update send button state when message template changes
+    const messageTemplate = document.getElementById('messageTemplate');
+    if (messageTemplate) {
+        messageTemplate.addEventListener('input', () => {
+            // Trigger UI update by calling a dummy function
+            const sendBtn = document.getElementById('sendMessageBtn');
+            if (sendBtn) {
+                const hasContent = messageTemplate.value.trim().length > 0;
+                const hasOpenTabs = document.getElementById('batchProgress')?.textContent !== 'No data loaded';
+                sendBtn.disabled = !hasContent || !hasOpenTabs;
+            }
+        });
+    }
 }

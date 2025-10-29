@@ -80,13 +80,17 @@ export async function openNextBatch() {
             const page = currentBatch[i];
             const tab = await chrome.tabs.create({
                 url: page.url,
-                active: i === 0 // Only first tab is active
+                active: false // All tabs open in background, stay on current tab
             });
             batchState.openedTabIds.push(tab.id);
             
             // Small delay between tab creations to avoid overwhelming the browser
             await sleep(300);
         }
+        
+        console.log(`✅ All ${currentBatch.length} tabs opened in background`);
+        console.log(`Current tab remains active, ready to send messages`);
+
 
         // Update index for next batch
         batchState.currentBatchIndex = endIndex;
@@ -207,6 +211,16 @@ function updateBatchUI() {
         clickMessageBtn.textContent = state.isProcessing ? 
             '⏳ Clicking buttons...' : 
             '💬 Click "Nhắn tin" Button (Step 1)';
+    }
+
+    const sendMessageBtn = document.getElementById('sendMessageBtn');
+    if (sendMessageBtn) {
+        // Check if message template is filled
+        const messageTemplate = document.getElementById('messageTemplate')?.value?.trim();
+        sendMessageBtn.disabled = batchState.openedTabIds.length === 0 || state.isProcessing || !messageTemplate;
+        sendMessageBtn.textContent = state.isProcessing ? 
+            '⏳ Sending messages...' : 
+            '📨 Type & Send Message (Step 2)';
     }
 
     if (resetBatchBtn) {
@@ -357,6 +371,245 @@ function findAndClickMessageButtonScript() {
             success: false,
             message: error.message,
             buttonText: null
+        };
+    }
+}
+
+/**
+ * Type message and send on all opened tabs
+ * Step 2: Find textbox, type message, and send
+ * Uses Chrome Debugger API to bypass Facebook's event blocking
+ */
+export async function typeAndSendMessageOnAllTabs() {
+    if (batchState.openedTabIds.length === 0) {
+        showMessage('No tabs are currently open. Open a batch first.', 'error');
+        return;
+    }
+
+    if (batchState.isProcessing) {
+        showMessage('Please wait, currently processing...', 'error');
+        return;
+    }
+
+    // Get message template from UI
+    const messageTemplate = document.getElementById('messageTemplate')?.value?.trim();
+    
+    if (!messageTemplate) {
+        showMessage('Please enter a message template first!', 'error');
+        return;
+    }
+
+    batchState.isProcessing = true;
+    updateBatchUI();
+
+    try {
+        let successCount = 0;
+        let failCount = 0;
+
+        showMessage(`Sending message to ${batchState.openedTabIds.length} tabs (using debugger API)...`, 'success');
+
+        for (let i = 0; i < batchState.openedTabIds.length; i++) {
+            const tabId = batchState.openedTabIds[i];
+            
+            try {
+                console.log(`Tab ${i + 1}: Finding input box coordinates...`);
+                
+                // Step 1: Execute script to find input box and get coordinates
+                const results = await chrome.scripting.executeScript({
+                    target: { tabId: tabId },
+                    func: findInputBoxCoordinates
+                });
+
+                if (!results || !results[0] || !results[0].result) {
+                    failCount++;
+                    console.log(`Tab ${i + 1}: ❌ Failed to find input box`);
+                    continue;
+                }
+
+                const { success, inputX, inputY, error } = results[0].result;
+                
+                if (!success) {
+                    failCount++;
+                    console.log(`Tab ${i + 1}: ❌ ${error}`);
+                    continue;
+                }
+
+                console.log(`Tab ${i + 1}: Found input at (${inputX}, ${inputY})`);
+
+                // Step 2: Send message to background to use debugger API
+                let response;
+                try {
+                    response = await chrome.runtime.sendMessage({
+                        action: 'sendMessageViaDebugger',
+                        tabId: tabId,  // Pass tabId explicitly
+                        inputX: inputX,
+                        inputY: inputY,
+                        messageText: messageTemplate
+                    });
+                    console.log(`Tab ${i + 1}: Received response from background:`, response);
+                } catch (sendError) {
+                    failCount++;
+                    console.error(`Tab ${i + 1}: ❌ Failed to send message to background:`, sendError);
+                    continue;
+                }
+
+                if (response && response.success) {
+                    successCount++;
+                    console.log(`Tab ${i + 1}: ✅ Message sent successfully via debugger`);
+                } else {
+                    failCount++;
+                    const errorMsg = response?.error || 'Unknown error';
+                    const errorDetails = response?.errorDetails || '';
+                    console.error(`Tab ${i + 1}: ❌ Failed - ${errorMsg}`);
+                    if (errorDetails) {
+                        console.error(`Tab ${i + 1}: Error details - ${errorDetails}`);
+                    }
+                }
+
+                // Delay between tabs to avoid being flagged as spam
+                await sleep(2500);
+
+            } catch (error) {
+                failCount++;
+                console.error(`Tab ${i + 1}: ❌ Exception in loop:`, error);
+                console.error(`Tab ${i + 1}: Error stack:`, error.stack);
+            }
+        }
+
+        // Show summary
+        if (successCount > 0) {
+            showMessage(
+                `✅ Sent message to ${successCount}/${batchState.openedTabIds.length} tabs` +
+                (failCount > 0 ? ` (${failCount} failed)` : ''),
+                'success'
+            );
+        } else {
+            showMessage(`❌ Failed to send message to all tabs. Check console for details.`, 'error');
+        }
+
+    } catch (error) {
+        console.error('Error sending messages:', error);
+        showMessage('Failed to send messages: ' + error.message, 'error');
+    } finally {
+        batchState.isProcessing = false;
+        updateBatchUI();
+    }
+}
+
+/**
+ * Find input box coordinates for debugger API
+ * This script runs in page context to locate the message input box
+ * and return its center coordinates for mouse click simulation
+ */
+function findInputBoxCoordinates() {
+    try {
+        console.log('Finding message input box...');
+        
+        // Find textbox with aria-label "Tin nhắn" or "Message"
+        const allTextboxes = document.querySelectorAll('[role="textbox"]');
+        console.log(`Found ${allTextboxes.length} textboxes`);
+        
+        let messageTextbox = null;
+        
+        for (const textbox of allTextboxes) {
+            const ariaLabel = textbox.getAttribute('aria-label') || '';
+            console.log('Checking textbox with aria-label:', ariaLabel);
+            
+            if (ariaLabel.includes('Tin nhắn') || ariaLabel.includes('Message')) {
+                messageTextbox = textbox;
+                console.log('✅ Found message textbox');
+                break;
+            }
+        }
+        
+        if (!messageTextbox) {
+            // Try alternative selectors for contenteditable
+            const contentEditables = document.querySelectorAll('[contenteditable="true"]');
+            console.log(`Found ${contentEditables.length} contenteditable elements`);
+            
+            for (const elem of contentEditables) {
+                const ariaLabel = elem.getAttribute('aria-label') || '';
+                if (ariaLabel.includes('Tin nhắn') || ariaLabel.includes('Message')) {
+                    messageTextbox = elem;
+                    console.log('✅ Found message textbox (contenteditable)');
+                    break;
+                }
+            }
+        }
+        
+        if (!messageTextbox) {
+            return {
+                success: false,
+                error: 'Message textbox not found. Make sure chat dialog is open.'
+            };
+        }
+        
+        // IMPORTANT: Focus the window first (especially for active tabs)
+        try {
+            window.focus();
+            console.log('Window focused');
+        } catch (e) {
+            console.log('Could not focus window:', e);
+        }
+        
+        // IMPORTANT: Scroll element into view to ensure it's visible
+        // This is especially important for active tabs
+        console.log('Scrolling element into view...');
+        messageTextbox.scrollIntoView({
+            behavior: 'instant',
+            block: 'center',
+            inline: 'center'
+        });
+        
+        // Small delay to let scroll complete
+        const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+        
+        // Return a promise to allow async delay
+        return new Promise((resolve) => {
+            setTimeout(() => {
+                // Get bounding rectangle AFTER scrolling
+                const rect = messageTextbox.getBoundingClientRect();
+                
+                // Calculate center coordinates (relative to viewport)
+                const inputX = rect.left + (rect.width / 2);
+                const inputY = rect.top + (rect.height / 2);
+                
+                console.log(`✅ Input box found at (${inputX}, ${inputY})`);
+                console.log(`   Rect: left=${rect.left}, top=${rect.top}, width=${rect.width}, height=${rect.height}`);
+                
+                // Verify coordinates are valid (within viewport)
+                const isValid = inputX > 0 && inputY > 0 && 
+                               inputX < window.innerWidth && 
+                               inputY < window.innerHeight;
+                
+                if (!isValid) {
+                    console.warn('⚠️ Coordinates might be out of viewport bounds');
+                    console.log(`   Viewport: ${window.innerWidth}x${window.innerHeight}`);
+                }
+                
+                resolve({
+                    success: true,
+                    inputX: Math.round(inputX),
+                    inputY: Math.round(inputY),
+                    rect: {
+                        left: rect.left,
+                        top: rect.top,
+                        width: rect.width,
+                        height: rect.height
+                    },
+                    viewport: {
+                        width: window.innerWidth,
+                        height: window.innerHeight
+                    }
+                });
+            }, 300); // Wait 300ms after scroll
+        });
+        
+    } catch (error) {
+        console.error('Error finding input box:', error);
+        return {
+            success: false,
+            error: error.message
         };
     }
 }

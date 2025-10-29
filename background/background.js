@@ -22,8 +22,183 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     });
   }
 
+  // Handle message sending via debugger API
+  if (request.action === 'sendMessageViaDebugger') {
+    // Get tabId from request instead of sender.tab (sidepanel doesn't have tab)
+    const tabId = request.tabId;
+    if (!tabId) {
+      sendResponse({ success: false, error: 'No tabId provided' });
+      return true;
+    }
+    
+    handleDebuggerMessage(request, tabId)
+      .then(result => sendResponse(result))
+      .catch(error => sendResponse({ success: false, error: error.message }));
+    return true; // Keep channel open for async response
+  }
+
   return true;
 });
+
+/**
+ * Handle sending message via Chrome Debugger API
+ * This bypasses Facebook's event blocking by using low-level input simulation
+ */
+async function handleDebuggerMessage(request, tabId) {
+  const { inputX, inputY, messageText } = request;
+  
+  console.log(`[Debugger] Starting handleDebuggerMessage for tab ${tabId}`);
+  console.log(`[Debugger] Coordinates: (${inputX}, ${inputY})`);
+  console.log(`[Debugger] Message length: ${messageText?.length || 0} chars`);
+  
+  try {
+    console.log(`[Debugger] Attaching to tab ${tabId}...`);
+    
+    // Try to detach first in case already attached
+    try {
+      await new Promise(resolve => {
+        chrome.debugger.detach({ tabId }, () => {
+          resolve();
+        });
+      });
+      console.log(`[Debugger] Detached any existing debugger`);
+    } catch (e) {
+      // Ignore detach errors
+    }
+    
+    await sleep(100);
+    
+    // Attach debugger to tab
+    await new Promise((resolve, reject) => {
+      chrome.debugger.attach({ tabId }, '1.3', () => {
+        if (chrome.runtime.lastError) {
+          console.error(`[Debugger] Attach failed:`, chrome.runtime.lastError);
+          reject(new Error(chrome.runtime.lastError.message));
+        } else {
+          console.log(`[Debugger] Attached to tab ${tabId} successfully`);
+          resolve();
+        }
+      });
+    });
+
+    // Small delay to ensure debugger is ready
+    await sleep(200);
+
+    // Step 1: Click to focus the input (simulate mouse press + release)
+    console.log(`[Debugger] Clicking at (${inputX}, ${inputY}) to focus input...`);
+    
+    await sendDebuggerCommand(tabId, 'Input.dispatchMouseEvent', {
+      type: 'mousePressed',
+      x: inputX,
+      y: inputY,
+      button: 'left',
+      clickCount: 1
+    });
+
+    await sleep(50);
+
+    await sendDebuggerCommand(tabId, 'Input.dispatchMouseEvent', {
+      type: 'mouseReleased',
+      x: inputX,
+      y: inputY,
+      button: 'left',
+      clickCount: 1
+    });
+
+    await sleep(500); // Increased from 300ms to 500ms
+
+    // Step 2: Insert text using Input.insertText (fast and efficient)
+    console.log(`[Debugger] Inserting text: "${messageText.substring(0, 50)}..."`);
+    
+    await sendDebuggerCommand(tabId, 'Input.insertText', {
+      text: messageText
+    });
+
+    await sleep(800); // Increased from 500ms to 800ms
+
+    // Step 3: Press Enter to send message
+    console.log(`[Debugger] Pressing Enter to send...`);
+    
+    // Send Enter key down
+    await sendDebuggerCommand(tabId, 'Input.dispatchKeyEvent', {
+      type: 'keyDown',
+      windowsVirtualKeyCode: 13,
+      nativeVirtualKeyCode: 13,
+      key: 'Enter',
+      code: 'Enter'
+    });
+
+    await sleep(50);
+
+    // Send Enter key up
+    await sendDebuggerCommand(tabId, 'Input.dispatchKeyEvent', {
+      type: 'keyUp',
+      windowsVirtualKeyCode: 13,
+      nativeVirtualKeyCode: 13,
+      key: 'Enter',
+      code: 'Enter'
+    });
+
+    await sleep(100);
+
+    // Detach debugger
+    await new Promise((resolve) => {
+      chrome.debugger.detach({ tabId }, () => {
+        console.log(`[Debugger] Detached from tab ${tabId}`);
+        resolve();
+      });
+    });
+
+    return {
+      success: true,
+      message: 'Message sent successfully via debugger'
+    };
+
+  } catch (error) {
+    console.error(`[Debugger] Error in handleDebuggerMessage:`, error);
+    console.error(`[Debugger] Error stack:`, error.stack);
+    
+    // Make sure to detach on error
+    try {
+      await new Promise(resolve => {
+        chrome.debugger.detach({ tabId }, () => {
+          console.log(`[Debugger] Detached after error`);
+          resolve();
+        });
+      });
+    } catch (e) {
+      console.error(`[Debugger] Detach error:`, e);
+    }
+
+    return {
+      success: false,
+      error: error.message || 'Unknown error in debugger handler',
+      errorDetails: error.toString()
+    };
+  }
+}
+
+/**
+ * Send command to debugger
+ */
+function sendDebuggerCommand(tabId, method, params) {
+  return new Promise((resolve, reject) => {
+    chrome.debugger.sendCommand({ tabId }, method, params, (result) => {
+      if (chrome.runtime.lastError) {
+        reject(new Error(chrome.runtime.lastError.message));
+      } else {
+        resolve(result);
+      }
+    });
+  });
+}
+
+/**
+ * Sleep helper
+ */
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
 
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
   if (changeInfo.status === 'complete' && tab.url) {

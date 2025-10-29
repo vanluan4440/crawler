@@ -72,12 +72,29 @@
                         <span id="batchProgress">No data loaded</span>
                     </div>
                     
+                    <!-- Message Template Input -->
+                    <div class="message-template-section">
+                        <label for="messageTemplate" class="template-label">
+                            📝 Message Template:
+                        </label>
+                        <textarea 
+                            id="messageTemplate" 
+                            class="message-template-input"
+                            placeholder="Enter your message template here...&#x0a;Example: Xin chào! Tôi muốn hợp tác với fanpage của bạn."
+                            rows="4"
+                        ></textarea>
+                    </div>
+                    
                     <button id="openBatchBtn" class="btn btn-success" disabled>
                         🚀 Open Next Batch (5 tabs)
                     </button>
                     
                     <button id="clickMessageBtn" class="btn btn-message" disabled>
                         💬 Click "Nhắn tin" Button (Step 1)
+                    </button>
+                    
+                    <button id="sendMessageBtn" class="btn btn-send" disabled>
+                        📨 Type & Send Message (Step 2)
                     </button>
                     
                     <div class="batch-actions">
@@ -92,7 +109,7 @@
 
                 <div class="batch-info">
                     <p style="font-size: 12px; color: #64748b;">
-                        💡 Step-by-step: Load pages → Open batch → Click "Nhắn tin" → [More steps coming]
+                        💡 Workflow: Load pages → Open batch → Enter template → Click "Nhắn tin" → Send message
                     </p>
                 </div>
             </div>
