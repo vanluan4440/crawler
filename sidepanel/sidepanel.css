@@ -443,3 +443,94 @@ body {
     background: #94a3b8;
 }
 
+/* Batch Messaging Section */
+.batch-section {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 16px;
+    border: 2px solid #10b981;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.batch-section .section-header h3 {
+    color: #059669;
+}
+
+.batch-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.batch-progress {
+    background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+    padding: 12px;
+    border-radius: 8px;
+    border: 1px solid #10b981;
+    text-align: center;
+}
+
+.batch-progress span {
+    font-size: 13px;
+    font-weight: 600;
+    color: #059669;
+}
+
+.batch-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    color: white;
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+}
+
+.btn-success {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+}
+
+.btn-success:hover {
+    background: linear-gradient(135deg, #059669 0%, #047857 100%);
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+.btn-warning {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    color: white;
+}
+
+.btn-warning:hover {
+    background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+}
+
+.batch-info {
+    margin-top: 12px;
+    padding: 8px;
+    background: #f0fdf4;
+    border-radius: 6px;
+}
+
+.batch-info p {
+    margin: 0;
+    line-height: 1.5;
+}
+
+.btn-export {
+    background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+}
+
+.btn-export:hover {
+    background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+    box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+}
+

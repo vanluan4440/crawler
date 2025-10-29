@@ -6,6 +6,12 @@
 import { navigateToUrl } from './modules/navigation.js';
 import { stopScroll } from './modules/scroll.js';
 import { extractAndExportFacebookPages } from './modules/exportCSV.js';
+import { 
+    loadBatchFromCurrentPage, 
+    openNextBatch, 
+    closeCurrentBatchTabs, 
+    resetBatchProcess 
+} from './modules/batchMessaging.js';
 
 /**
  * Initialize application
@@ -28,4 +34,10 @@ function setupEventListeners() {
     });
 
     document.getElementById('stopScrollBtn').addEventListener('click', stopScroll);
+
+    // Batch messaging event listeners
+    document.getElementById('loadBatchBtn').addEventListener('click', loadBatchFromCurrentPage);
+    document.getElementById('openBatchBtn').addEventListener('click', openNextBatch);
+    document.getElementById('closeBatchBtn').addEventListener('click', closeCurrentBatchTabs);
+    document.getElementById('resetBatchBtn').addEventListener('click', resetBatchProcess);
 }

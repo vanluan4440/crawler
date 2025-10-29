@@ -56,6 +56,43 @@
                 </button>
             </div>
 
+            <!-- Batch Messaging Section -->
+            <div class="batch-section">
+                <div class="section-header">
+                    <span class="section-icon">💬</span>
+                    <h3>Batch Messaging</h3>
+                </div>
+                
+                <div class="batch-controls">
+                    <button id="loadBatchBtn" class="btn btn-primary">
+                        📥 Load Pages from Current Tab
+                    </button>
+                    
+                    <div class="batch-progress">
+                        <span id="batchProgress">No data loaded</span>
+                    </div>
+                    
+                    <button id="openBatchBtn" class="btn btn-success" disabled>
+                        🚀 Open Next Batch (5 tabs)
+                    </button>
+                    
+                    <div class="batch-actions">
+                        <button id="closeBatchBtn" class="btn btn-secondary" disabled>
+                            ❌ Close Current Batch
+                        </button>
+                        <button id="resetBatchBtn" class="btn btn-warning" disabled>
+                            🔄 Reset Process
+                        </button>
+                    </div>
+                </div>
+
+                <div class="batch-info">
+                    <p style="font-size: 12px; color: #64748b;">
+                        💡 Load pages first, then open 5 tabs at a time to send messages
+                    </p>
+                </div>
+            </div>
+
             <div class="help-section">
                 <h3>💡 How to Use - Facebook pages Export</h3>
                 <p>1. Enter search keyword above</p>
