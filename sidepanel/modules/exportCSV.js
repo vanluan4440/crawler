@@ -112,33 +112,34 @@ export async function extractAndExportFacebookPages() {
  * @param {Array} pages - Array of page objects {title, url}
  */
 function exportPagesToCSV(pages) {
-    // UTF-8 BOM for Excel compatibility
+    // Use comma as separator and wrap fields in quotes for Excel compatibility
+    // Add UTF-8 BOM to help Excel on Windows/Mac, but use CSV MIME type (not Excel) for better Mac compatibility
     let csv = '\uFEFF';
-    csv += 'No,Page Name,Page URL\n';
+    csv += '"No","Page Name","Page URL"\r\n';
 
-    // Chỉ export các url có dạng https://www.facebook.com/USERNAME (không chứa thêm slash hoặc đoạn sau)
     let exportIndex = 1;
     pages.forEach((page) => {
-        // Regex: bắt đúng https://www.facebook.com/<username> (không thêm gì sau)
-        // <username> phải có ít nhất 1 ký tự, chỉ nhận dạng đầu tiên sau domain và không có thêm dấu slash
+        // Only export URLs of the form https://www.facebook.com/USERNAME
         const validUrl = page.url.match(/^https:\/\/www\.facebook\.com\/[A-Za-z0-9.\-_]+$/);
         if (validUrl) {
             const title = escapeCSV(page.title);
-            const url = `=HYPERLINK("${page.url}")`;
-            csv += `${exportIndex},"${title}",${url}\n`;
+            // Avoid Excel formulas, just output as URL string for Mac compatibility
+            const url = escapeCSV(page.url);
+            csv += `"${exportIndex}","${title}","${url}"\r\n`;
             exportIndex++;
         }
     });
 
-
-    // Use Excel MIME type so Excel opens it correctly
-    const blob = new Blob([csv], { type: 'application/vnd.ms-excel' });
+    // Use 'text/csv' instead of Excel MIME type for best Mac Excel import compatibility
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
 
     const link = document.createElement('a');
     link.href = url;
-    link.download = `facebook-pages-${Date.now()}.xls`;
+    link.download = `facebook-pages-${Date.now()}.csv`;
+    document.body.appendChild(link); // Required for Safari support
     link.click();
+    document.body.removeChild(link);
 
     URL.revokeObjectURL(url);
 }
