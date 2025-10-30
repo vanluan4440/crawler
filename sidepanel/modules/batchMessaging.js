@@ -47,9 +47,10 @@ export function initBatchMessaging(pages) {
 
 /**
  * Open next batch of 5 tabs
+ * @param {boolean} skipProcessingCheck - Skip isProcessing check for auto mode
  */
-export async function openNextBatch() {
-    if (batchState.isProcessing) {
+export async function openNextBatch(skipProcessingCheck = false) {
+    if (!skipProcessingCheck && batchState.isProcessing) {
         showMessage('Please wait, currently processing...', 'error');
         return;
     }
@@ -59,8 +60,10 @@ export async function openNextBatch() {
         return;
     }
 
-    batchState.isProcessing = true;
-    updateBatchUI();
+    if (!skipProcessingCheck) {
+        batchState.isProcessing = true;
+        updateBatchUI();
+    }
 
     try {
         // Calculate batch range
@@ -83,8 +86,18 @@ export async function openNextBatch() {
                 active: false
             });
             batchState.openedTabIds.push(tab.id);
-            await sleep(300);
+            
+            // WAIT TIME: Delay between opening each tab to avoid overwhelming the browser
+            // Recommended: 500ms (can reduce to 300ms for faster machines)
+            await sleep(500);
         }
+
+        // WAIT TIME: Auto-detect when all tabs finish loading (max 30 seconds timeout)
+        // This is handled by waitForAllTabsToLoad() function
+        // To adjust timeout, modify the timeout parameter in waitForAllTabsToLoad()
+        showMessage('Waiting for all tabs to load...', 'success');
+        await waitForAllTabsToLoad(batchState.openedTabIds);
+        showMessage('All tabs loaded successfully', 'success');
 
 
         // Update index for next batch
@@ -103,8 +116,10 @@ export async function openNextBatch() {
         console.error('Error opening batch:', error);
         showMessage('Failed to open batch: ' + error.message, 'error');
     } finally {
-        batchState.isProcessing = false;
-        updateBatchUI();
+        if (!skipProcessingCheck) {
+            batchState.isProcessing = false;
+            updateBatchUI();
+        }
     }
 }
 
@@ -140,6 +155,81 @@ export function resetBatchProcess() {
     closeCurrentBatchTabs();
     updateBatchUI();
     showMessage('Reset batch process. Ready to start from beginning.', 'success');
+}
+
+/**
+ * Auto send messages to all pages
+ * Opens 5 tabs → click message → send → close → repeat
+ */
+export async function sendToAllPages() {
+    try {
+        const messageTemplate = document.getElementById('messageTemplate')?.value?.trim();
+        if (!messageTemplate) {
+            showMessage('Please enter a message template first', 'error');
+            return;
+        }
+
+        if (batchState.allPages.length === 0) {
+            showMessage('No pages loaded. Please load pages first.', 'error');
+            return;
+        }
+
+        // Reset batch to start from beginning
+        batchState.currentBatchIndex = 0;
+        batchState.isProcessing = false;
+        batchState.openedTabIds = [];
+
+        const totalPages = batchState.allPages.length;
+        const totalBatches = Math.ceil(totalPages / batchState.batchSize);
+        let processedPages = 0;
+
+        for (let batchNum = 0; batchNum < totalBatches; batchNum++) {
+            const batchNumber = batchNum + 1;
+
+            // Open tabs and wait for them to load (waitForAllTabsToLoad is called inside openNextBatch)
+            await openNextBatch(true);
+            
+            // WAIT TIME: Additional buffer after all tabs loaded to ensure Facebook page is fully interactive
+            // Recommended: 3000ms (increase to 4000-5000ms if pages are slow to load)
+            await sleep(3000);
+
+            if (batchState.openedTabIds.length === 0) {
+                continue;
+            }
+
+            // Click message button with longer wait time
+            await clickMessageButtonOnAllTabs(true);
+            
+            // WAIT TIME: Wait for chatbox to appear after clicking "Nhắn tin" button on all tabs
+            // Recommended: 8000ms (reduce to 6000ms if chatbox opens quickly, increase to 10000ms if slow)
+            await sleep(8000);
+
+            // Send messages with longer wait time
+            await typeAndSendMessageOnAllTabs(true);
+            
+            // WAIT TIME: Wait for all messages to be sent successfully before closing tabs
+            // Recommended: 8000ms (reduce to 6000ms if messages send quickly, increase to 10000ms if slow)
+            await sleep(8000);
+
+            await closeCurrentBatchTabs();
+            
+            processedPages += batchState.batchSize;
+            if (processedPages > totalPages) processedPages = totalPages;
+            
+            if (batchNum < totalBatches - 1) {
+                // WAIT TIME: Delay between batches to avoid rate limiting
+                // Recommended: 3000ms (increase to 5000ms if Facebook blocks you)
+                await sleep(3000);
+            }
+        }
+        
+        showMessage(`✅ Auto send completed! Messages sent to ${processedPages} pages`, 'success');
+
+    } catch (error) {
+        console.error('Auto send error:', error);
+        showMessage('Auto send failed: ' + error.message, 'error');
+        batchState.isProcessing = false;
+    }
 }
 
 /**
@@ -184,10 +274,27 @@ function updateBatchUI() {
     }
 
     // Update button states
+    const sendToAllPagesBtn = document.getElementById('sendToAllPagesBtn');
     const openBatchBtn = document.getElementById('openBatchBtn');
     const clickMessageBtn = document.getElementById('clickMessageBtn');
     const resetBatchBtn = document.getElementById('resetBatchBtn');
     const closeBatchBtn = document.getElementById('closeBatchBtn');
+
+    // Auto send button
+    if (sendToAllPagesBtn) {
+        const messageTemplate = document.getElementById('messageTemplate')?.value?.trim();
+        const canSend = state.hasData && messageTemplate && !state.isProcessing;
+        
+        sendToAllPagesBtn.disabled = !canSend;
+        
+        if (state.isProcessing) {
+            sendToAllPagesBtn.textContent = '⏳ Sending...';
+        } else if (state.hasData) {
+            sendToAllPagesBtn.textContent = `🚀 Send to All Pages (${state.totalPages} pages)`;
+        } else {
+            sendToAllPagesBtn.textContent = '🚀 Send to All Pages (Auto)';
+        }
+    }
 
     if (openBatchBtn) {
         openBatchBtn.disabled = !state.hasData || state.isComplete || state.isProcessing;
@@ -235,22 +342,67 @@ function sleep(ms) {
 }
 
 /**
+ * Wait for all tabs to finish loading
+ * @param {Array} tabIds - Array of tab IDs to wait for
+ * @param {number} timeout - Maximum wait time in milliseconds (default: 30000)
+ */
+async function waitForAllTabsToLoad(tabIds, timeout = 30000) {
+    const startTime = Date.now();
+    const checkInterval = 500;
+    
+    while (Date.now() - startTime < timeout) {
+        try {
+            const loadingStates = await Promise.all(
+                tabIds.map(async (tabId) => {
+                    try {
+                        const tab = await chrome.tabs.get(tabId);
+                        return tab.status === 'complete';
+                    } catch (e) {
+                        return true;
+                    }
+                })
+            );
+            
+            // Check if all tabs are loaded
+            if (loadingStates.every(loaded => loaded)) {
+                // WAIT TIME: Extra buffer after tabs report 'complete' to ensure DOM is fully rendered
+                // Recommended: 2000ms (can reduce to 1000ms if pages load fast)
+                await sleep(2000);
+                return true;
+            }
+        } catch (e) {
+            console.error('Error checking tab status:', e);
+        }
+        
+        await sleep(checkInterval);
+    }
+    
+    // Timeout reached, proceed anyway
+    console.warn('Tab loading timeout reached, proceeding...');
+    return false;
+}
+
+/**
  * Click "Nhắn tin" button on all opened tabs
  * Step 1: Find and click the message button
+ * @param {boolean} skipProcessingCheck - Skip isProcessing check for auto mode
  */
-export async function clickMessageButtonOnAllTabs() {
+export async function clickMessageButtonOnAllTabs(skipProcessingCheck = false) {
     if (batchState.openedTabIds.length === 0) {
         showMessage('No tabs are currently open. Open a batch first.', 'error');
         return;
     }
 
-    if (batchState.isProcessing) {
+    if (!skipProcessingCheck && batchState.isProcessing) {
         showMessage('Please wait, currently processing...', 'error');
         return;
     }
 
-    batchState.isProcessing = true;
-    updateBatchUI();
+    const wasProcessing = batchState.isProcessing;
+    if (!skipProcessingCheck) {
+        batchState.isProcessing = true;
+        updateBatchUI();
+    }
 
     try {
         let successCount = 0;
@@ -279,7 +431,9 @@ export async function clickMessageButtonOnAllTabs() {
                     failCount++;
                 }
 
-                await sleep(500);
+                // WAIT TIME: Delay between clicking "Nhắn tin" button on each tab
+                // Recommended: 1200ms (reduce to 800ms for faster operation, increase to 1500ms if chatbox fails to load)
+                await sleep(1200);
 
             } catch (error) {
                 failCount++;
@@ -302,8 +456,10 @@ export async function clickMessageButtonOnAllTabs() {
         console.error('Error clicking message buttons:', error);
         showMessage('Failed to click message buttons: ' + error.message, 'error');
     } finally {
-        batchState.isProcessing = false;
-        updateBatchUI();
+        if (!skipProcessingCheck) {
+            batchState.isProcessing = false;
+            updateBatchUI();
+        }
     }
 }
 
@@ -343,13 +499,17 @@ function findAndClickMessageButtonScript() {
  * Step 2: Find textbox, type message, and send
  * Uses Chrome Debugger API to bypass Facebook's event blocking
  */
-export async function typeAndSendMessageOnAllTabs() {
+/**
+ * Type and send message to all opened tabs
+ * @param {boolean} skipProcessingCheck - Skip isProcessing check for auto mode
+ */
+export async function typeAndSendMessageOnAllTabs(skipProcessingCheck = false) {
     if (batchState.openedTabIds.length === 0) {
         showMessage('No tabs are currently open. Open a batch first.', 'error');
         return;
     }
 
-    if (batchState.isProcessing) {
+    if (!skipProcessingCheck && batchState.isProcessing) {
         showMessage('Please wait, currently processing...', 'error');
         return;
     }
@@ -362,8 +522,10 @@ export async function typeAndSendMessageOnAllTabs() {
         return;
     }
 
-    batchState.isProcessing = true;
-    updateBatchUI();
+    if (!skipProcessingCheck) {
+        batchState.isProcessing = true;
+        updateBatchUI();
+    }
 
     try {
         let successCount = 0;
@@ -414,7 +576,11 @@ export async function typeAndSendMessageOnAllTabs() {
                     console.error(`Tab ${i + 1} failed:`, response?.error);
                 }
 
-                await sleep(2500);
+                // WAIT TIME: Delay between sending messages to each tab
+                // Recommended: 4000ms (reduce to 3000ms for faster operation, increase to 5000ms if injection fails)
+                if (i < batchState.openedTabIds.length - 1) {
+                    await sleep(4000);
+                }
 
             } catch (error) {
                 failCount++;
@@ -437,8 +603,10 @@ export async function typeAndSendMessageOnAllTabs() {
         console.error('Error sending messages:', error);
         showMessage('Failed to send messages: ' + error.message, 'error');
     } finally {
-        batchState.isProcessing = false;
-        updateBatchUI();
+        if (!skipProcessingCheck) {
+            batchState.isProcessing = false;
+            updateBatchUI();
+        }
     }
 }
 
@@ -496,7 +664,9 @@ function findInputBoxCoordinates() {
                     inputX: Math.round(inputX),
                     inputY: Math.round(inputY)
                 });
-            }, 300);
+            // WAIT TIME: Wait for textbox to be fully rendered before getting coordinates
+            // Recommended: 800ms (reduce to 500ms if textbox renders quickly)
+            }, 800);
         });
         
     } catch (error) {

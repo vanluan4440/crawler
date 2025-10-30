@@ -85,17 +85,28 @@
                         ></textarea>
                     </div>
                     
-                    <button id="openBatchBtn" class="btn btn-success" disabled>
-                        🚀 Open Next Batch (5 tabs)
+                    <!-- Auto Send Button -->
+                    <button id="sendToAllPagesBtn" class="btn btn-auto-send" disabled>
+                        🚀 Send to All Pages (Auto)
                     </button>
                     
-                    <button id="clickMessageBtn" class="btn btn-message" disabled>
-                        💬 Click "Nhắn tin" Button (Step 1)
-                    </button>
-                    
-                    <button id="sendMessageBtn" class="btn btn-send" disabled>
-                        📨 Type & Send Message (Step 2)
-                    </button>
+                    <!-- Manual Controls (for testing) -->
+                    <details style="margin-top: 12px;">
+                        <summary style="cursor: pointer; color: #64748b; font-size: 12px;">Manual Controls (Advanced)</summary>
+                        <div style="margin-top: 8px; display: flex; flex-direction: column; gap: 8px;">
+                            <button id="openBatchBtn" class="btn btn-success" disabled>
+                                🚀 Open Next Batch (5 tabs)
+                            </button>
+                            
+                            <button id="clickMessageBtn" class="btn btn-message" disabled>
+                                💬 Click "Nhắn tin" Button (Step 1)
+                            </button>
+                            
+                            <button id="sendMessageBtn" class="btn btn-send" disabled>
+                                📨 Type & Send Message (Step 2)
+                            </button>
+                        </div>
+                    </details>
                     
                     <div class="batch-actions">
                         <button id="closeBatchBtn" class="btn btn-secondary" disabled>
@@ -109,7 +120,10 @@
 
                 <div class="batch-info">
                     <p style="font-size: 12px; color: #64748b;">
-                        💡 Workflow: Load pages → Open batch → Enter template → Click "Nhắn tin" → Send message
+                        💡 Auto Workflow: Load pages → Enter template → Click "Send to All Pages" → Done! 🎉
+                    </p>
+                    <p style="font-size: 11px; color: #94a3b8; margin-top: 4px;">
+                        The extension will automatically open batches, click "Nhắn tin", send messages, and close tabs.
                     </p>
                 </div>
             </div>

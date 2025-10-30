@@ -12,7 +12,8 @@ import {
     closeCurrentBatchTabs, 
     resetBatchProcess,
     clickMessageButtonOnAllTabs,
-    typeAndSendMessageOnAllTabs
+    typeAndSendMessageOnAllTabs,
+    sendToAllPages
 } from './modules/batchMessaging.js';
 
 /**
@@ -39,20 +40,33 @@ function setupEventListeners() {
 
     // Batch messaging event listeners
     document.getElementById('loadBatchBtn').addEventListener('click', loadBatchFromCurrentPage);
+    
+    // Auto send button - main feature
+    document.getElementById('sendToAllPagesBtn').addEventListener('click', sendToAllPages);
+    
+    // Manual controls (for testing)
     document.getElementById('openBatchBtn').addEventListener('click', openNextBatch);
     document.getElementById('clickMessageBtn').addEventListener('click', clickMessageButtonOnAllTabs);
     document.getElementById('sendMessageBtn').addEventListener('click', typeAndSendMessageOnAllTabs);
     document.getElementById('closeBatchBtn').addEventListener('click', closeCurrentBatchTabs);
     document.getElementById('resetBatchBtn').addEventListener('click', resetBatchProcess);
 
-    // Update send button state when message template changes
+    // Update button states when message template changes
     const messageTemplate = document.getElementById('messageTemplate');
     if (messageTemplate) {
         messageTemplate.addEventListener('input', () => {
-            // Trigger UI update by calling a dummy function
+            const hasContent = messageTemplate.value.trim().length > 0;
+            const hasData = document.getElementById('batchProgress')?.textContent !== 'No data loaded';
+            
+            // Update auto send button
+            const autoSendBtn = document.getElementById('sendToAllPagesBtn');
+            if (autoSendBtn) {
+                autoSendBtn.disabled = !hasContent || !hasData;
+            }
+            
+            // Update manual send button
             const sendBtn = document.getElementById('sendMessageBtn');
             if (sendBtn) {
-                const hasContent = messageTemplate.value.trim().length > 0;
                 const hasOpenTabs = document.getElementById('batchProgress')?.textContent !== 'No data loaded';
                 sendBtn.disabled = !hasContent || !hasOpenTabs;
             }
