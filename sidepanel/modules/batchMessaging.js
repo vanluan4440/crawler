@@ -71,8 +71,8 @@ export async function sendToAllPages() {
             await openNextBatch(true);
             
             // WAIT TIME: Additional buffer after all tabs loaded to ensure Facebook page is fully interactive
-            // Recommended: 3000ms (increase to 4000-5000ms if pages are slow to load)
-            await sleep(3000);
+            // Recommended: 5000ms (increase to 6000-7000ms if pages are slow to load)
+            await sleep(5000);
 
             if (batchState.openedTabIds.length === 0) {
                 continue;
@@ -82,15 +82,15 @@ export async function sendToAllPages() {
             await clickMessageButtonOnAllTabs(true);
             
             // WAIT TIME: Wait for chatbox to appear after clicking "Nhắn tin" button on all tabs
-            // Recommended: 8000ms (reduce to 6000ms if chatbox opens quickly, increase to 10000ms if slow)
-            await sleep(8000);
+            // Recommended: 12000ms (reduce to 8000ms if chatbox opens quickly, increase to 15000ms if slow)
+            await sleep(12000);
 
             // Send messages with longer wait time
             await typeAndSendMessageOnAllTabs(true);
             
             // WAIT TIME: Wait for all messages to be sent successfully before closing tabs
-            // Recommended: 8000ms (reduce to 6000ms if messages send quickly, increase to 10000ms if slow)
-            await sleep(8000);
+            // Recommended: 10000ms (reduce to 8000ms if messages send quickly, increase to 12000ms if slow)
+            await sleep(10000);
 
             await closeCurrentBatchTabs();
             
@@ -99,8 +99,8 @@ export async function sendToAllPages() {
             
             if (batchNum < totalBatches - 1) {
                 // WAIT TIME: Delay between batches to avoid rate limiting
-                // Recommended: 3000ms (increase to 5000ms if Facebook blocks you)
-                await sleep(3000);
+                // Recommended: 5000ms (increase to 7000ms if Facebook blocks you)
+                await sleep(5000);
             }
         }
         

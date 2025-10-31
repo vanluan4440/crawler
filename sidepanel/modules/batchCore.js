@@ -38,8 +38,8 @@ export async function waitForAllTabsToLoad(tabIds, timeout = 30000) {
             // Check if all tabs are loaded
             if (loadingStates.every(loaded => loaded)) {
                 // WAIT TIME: Extra buffer after tabs report 'complete' to ensure DOM is fully rendered
-                // Recommended: 2000ms (can reduce to 1000ms if pages load fast)
-                await sleep(2000);
+                // Recommended: 3000ms (can reduce to 2000ms if pages load fast)
+                await sleep(3000);
                 return true;
             }
         } catch (e) {
@@ -97,8 +97,8 @@ export async function openNextBatch(skipProcessingCheck = false) {
             batchState.openedTabIds.push(tab.id);
             
             // WAIT TIME: Delay between opening each tab to avoid overwhelming the browser
-            // Recommended: 500ms (can reduce to 300ms for faster machines)
-            await sleep(500);
+            // Recommended: 800ms (can reduce to 500ms for faster machines)
+            await sleep(800);
         }
 
         // WAIT TIME: Auto-detect when all tabs finish loading (max 30 seconds timeout)

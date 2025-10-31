@@ -54,13 +54,13 @@ async function handleDebuggerMessage(request, tabId) {
         chrome.debugger.detach({ tabId }, () => resolve());
       });
       // WAIT TIME: Wait after detaching debugger to ensure clean state
-      // Recommended: 500ms (reduce to 300ms for faster operation)
-      await sleep(500);
+      // Recommended: 800ms (reduce to 500ms for faster operation)
+      await sleep(800);
     } catch (e) {}
     
     // WAIT TIME: Buffer time before attaching debugger
-    // Recommended: 400ms (reduce to 200ms for faster operation)
-    await sleep(400);
+    // Recommended: 700ms (reduce to 400ms for faster operation)
+    await sleep(700);
     
     // Attach debugger
     await new Promise((resolve, reject) => {
@@ -74,8 +74,8 @@ async function handleDebuggerMessage(request, tabId) {
     });
 
     // WAIT TIME: Wait after attaching debugger to ensure it's ready
-    // Recommended: 500ms (reduce to 300ms for faster operation, increase to 700ms if debugger fails)
-    await sleep(500);
+    // Recommended: 1000ms (reduce to 700ms for faster operation, increase to 1500ms if debugger fails)
+    await sleep(1000);
 
     // Click to focus input
     await sendDebuggerCommand(tabId, 'Input.dispatchMouseEvent', {
@@ -87,8 +87,8 @@ async function handleDebuggerMessage(request, tabId) {
     });
 
     // WAIT TIME: Delay between mouse press and release to simulate natural click
-    // Recommended: 150ms (reduce to 50ms for faster operation)
-    await sleep(150);
+    // Recommended: 250ms (reduce to 150ms for faster operation)
+    await sleep(250);
 
     await sendDebuggerCommand(tabId, 'Input.dispatchMouseEvent', {
       type: 'mouseReleased',
@@ -99,8 +99,8 @@ async function handleDebuggerMessage(request, tabId) {
     });
 
     // WAIT TIME: Wait for input field to be focused after click
-    // Recommended: 1500ms (reduce to 1000ms if focus is fast, increase to 2000ms if slow)
-    await sleep(1500);
+    // Recommended: 2500ms (reduce to 1500ms if focus is fast, increase to 3500ms if slow)
+    await sleep(2500);
 
     // Insert text
     await sendDebuggerCommand(tabId, 'Input.insertText', {
@@ -108,8 +108,8 @@ async function handleDebuggerMessage(request, tabId) {
     });
 
     // WAIT TIME: Wait for text to be fully inserted into input field
-    // Recommended: 2000ms (reduce to 1500ms if text inserts quickly, increase to 2500ms if slow)
-    await sleep(2000);
+    // Recommended: 3000ms (reduce to 2000ms if text inserts quickly, increase to 4000ms if slow)
+    await sleep(3000);
 
     // Detach debugger
     await new Promise((resolve) => {
@@ -117,8 +117,8 @@ async function handleDebuggerMessage(request, tabId) {
     });
 
     // WAIT TIME: Wait after detaching debugger before clicking send button
-    // Recommended: 1200ms (reduce to 800ms for faster operation, increase to 1500ms if send button not found)
-    await sleep(1200);
+    // Recommended: 2000ms (reduce to 1200ms for faster operation, increase to 2500ms if send button not found)
+    await sleep(2000);
 
     // Find and click send button
     const clickResult = await chrome.scripting.executeScript({
@@ -142,8 +142,8 @@ async function handleDebuggerMessage(request, tabId) {
     }
 
     // WAIT TIME: Wait after clicking send button to ensure message is sent
-    // Recommended: 1500ms (reduce to 1000ms if message sends quickly, increase to 2000ms if slow)
-    await sleep(1500);
+    // Recommended: 2000ms (reduce to 1500ms if message sends quickly, increase to 2500ms if slow)
+    await sleep(2000);
 
     return { success: true };
 

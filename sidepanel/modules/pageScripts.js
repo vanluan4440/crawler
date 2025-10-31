@@ -89,8 +89,8 @@ export function findInputBoxCoordinates() {
                     inputY: Math.round(inputY)
                 });
             // WAIT TIME: Wait for textbox to be fully rendered before getting coordinates
-            // Recommended: 800ms (reduce to 500ms if textbox renders quickly)
-            }, 800);
+            // Recommended: 1200ms (reduce to 800ms if textbox renders quickly)
+            }, 1200);
         });
         
     } catch (error) {

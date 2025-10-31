@@ -57,8 +57,8 @@ export async function clickMessageButtonOnAllTabs(skipProcessingCheck = false) {
                 }
 
                 // WAIT TIME: Delay between clicking "Nhắn tin" button on each tab
-                // Recommended: 1200ms (reduce to 800ms for faster operation, increase to 1500ms if chatbox fails to load)
-                await sleep(1200);
+                // Recommended: 1800ms (reduce to 1200ms for faster operation, increase to 2500ms if chatbox fails to load)
+                await sleep(1800);
 
             } catch (error) {
                 failCount++;
@@ -168,9 +168,9 @@ export async function typeAndSendMessageOnAllTabs(skipProcessingCheck = false) {
                 }
 
                 // WAIT TIME: Delay between sending messages to each tab
-                // Recommended: 4000ms (reduce to 3000ms for faster operation, increase to 5000ms if injection fails)
+                // Recommended: 5000ms (reduce to 4000ms for faster operation, increase to 6000ms if injection fails)
                 if (i < batchState.openedTabIds.length - 1) {
-                    await sleep(4000);
+                    await sleep(5000);
                 }
 
             } catch (error) {
