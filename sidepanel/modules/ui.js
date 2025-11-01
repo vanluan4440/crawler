@@ -74,3 +74,26 @@ export async function loadCurrentPageInfo() {
     }
 }
 
+/**
+ * Show loaded pages preview with auto-hide after 3 seconds
+ * @param {Array} pages - Array of page objects {order, title, url}
+ */
+export function showLoadedPagesPreview(pages) {
+    const previewElement = document.getElementById('loadedPagesPreview');
+    const messageElement = document.getElementById('loadedPagesMessage');
+    
+    if (!previewElement || !messageElement) {
+        console.warn('Loaded pages preview elements not found');
+        return;
+    }
+    
+    // Set message with number of pages loaded
+    messageElement.textContent = `${pages.length} pages loaded successfully!`;
+    
+    previewElement.style.display = 'flex';
+    
+    setTimeout(() => {
+        previewElement.style.display = 'none';
+    }, 4000);
+}
+

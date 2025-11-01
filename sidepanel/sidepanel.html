@@ -52,7 +52,7 @@
 
             <div class="export-section">
                 <button id="exportCsvBtn" class="btn btn-export">
-                    <span>📊 Export Facebook pages CSV</span>
+                    <span>📊 Export Crawled Pages to CSV</span>
                 </button>
             </div>
 
@@ -65,8 +65,36 @@
                 
                 <div class="batch-controls">
                     <button id="loadBatchBtn" class="btn btn-primary">
-                        📥 Load Pages from Current Tab
+                        📥 Load Newly Crawled Pages
                     </button>
+
+                    <div style="display: flex; align-items: center; margin: 0;">
+                        <hr style="flex: 1; border: none; border-top: 1px solid #e5e7eb; margin: 0;">
+                        <span style="margin: 0 12px; color: #94a3b8; font-size: 13px; font-weight: 500;">or</span>
+                        <hr style="flex: 1; border: none; border-top: 1px solid #e5e7eb; margin: 0;">
+                    </div>
+                    
+                    
+                    <!-- CSV Upload Section -->
+                    <div class="csv-upload-section" style="margin-top: 12px;">
+                        <div style="display: flex; gap: 8px; align-items: center;">
+                            <button id="uploadCsvBtn" class="btn btn-primary" style="flex: 1;">
+                                📂 Upload CSV File
+                            </button>
+                            <input 
+                                type="file" 
+                                id="csvFileInput" 
+                                accept=".csv" 
+                                style="display: none;"
+                            />
+                        </div>
+                    </div>
+                    
+                    <!-- Loaded Pages Preview -->
+                    <div id="loadedPagesPreview" class="loaded-pages-preview" style="display: none;">
+                        <span class="loaded-pages-icon">✅</span>
+                        <p id="loadedPagesMessage" class="loaded-pages-message"></p>
+                    </div>
                     
                     <div class="batch-progress">
                         <span id="batchProgress">No data loaded</span>
@@ -120,10 +148,10 @@
 
                 <div class="batch-info">
                     <p style="font-size: 12px; color: #64748b;">
-                        💡 Auto Workflow: Load pages → Enter template → Click "Send to All Pages" → Done! 🎉
+                        💡 Auto Workflow: load newly crawled pages or uploaded CSV → Enter template → Click "Send to All Pages" → Done! 🎉
                     </p>
                     <p style="font-size: 11px; color: #94a3b8; margin-top: 4px;">
-                        The extension will automatically open batches, click "Nhắn tin", send messages, and close tabs.
+                        The extension will automatically open batches and send messages to all pages.
                     </p>
                 </div>
             </div>
@@ -133,10 +161,10 @@
                 <p>1. Enter search keyword above</p>
                 <p>2. Click "Go" - Auto-scroll will load all results</p>
                 <p>3. Wait for "✅ Scroll completed!"</p>
-                <p>4. Click "Export Facebook pages Excel"</p>
+                <p>4. Click "Export Newly Crawled Pages to CSV"</p>
                 <p>5. CSV file downloads automatically</p>
                 <p style="margin-top: 8px; font-size: 11px; color: #64748b;">
-                    📋 CSV format: Order, Group Name, Group URL
+                    📋 CSV format: Order, Page Name, Page URL
                 </p>
             </div>
         </div>

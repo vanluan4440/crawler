@@ -15,6 +15,7 @@ import {
     typeAndSendMessageOnAllTabs,
     sendToAllPages
 } from './modules/batchMessaging.js';
+import { handleCSVUpload, triggerFileUpload } from './modules/uploadCSV.js';
 
 /**
  * Initialize application
@@ -37,6 +38,15 @@ function setupEventListeners() {
     });
 
     document.getElementById('stopScrollBtn').addEventListener('click', stopScroll);
+
+    // CSV Upload event listeners
+    document.getElementById('uploadCsvBtn').addEventListener('click', triggerFileUpload);
+    document.getElementById('csvFileInput').addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            handleCSVUpload(file);
+        }
+    });
 
     // Batch messaging event listeners
     document.getElementById('loadBatchBtn').addEventListener('click', loadBatchFromCurrentPage);

@@ -3,7 +3,7 @@
  * Coordinates batch messaging workflow and data loading
  */
 
-import { showMessage } from './ui.js';
+import { showMessage, showLoadedPagesPreview } from './ui.js';
 import { batchState, updateBatchUI, resetBatchState } from './batchState.js';
 import { openNextBatch, closeCurrentBatchTabs, resetBatchProcess, sleep } from './batchCore.js';
 import { clickMessageButtonOnAllTabs, typeAndSendMessageOnAllTabs } from './messageActions.js';
@@ -36,6 +36,9 @@ export function initBatchMessaging(pages) {
     batchState.openedTabIds = [];
 
     updateBatchUI();
+    
+    showLoadedPagesPreview(validPages);
+    
     showMessage(`Initialized with ${validPages.length} pages ready to process`, 'success');
     return true;
 }
@@ -78,14 +81,12 @@ export async function sendToAllPages() {
                 continue;
             }
 
-            // Click message button with longer wait time
             await clickMessageButtonOnAllTabs(true);
             
             // WAIT TIME: Wait for chatbox to appear after clicking "Nhắn tin" button on all tabs
             // Recommended: 12000ms (reduce to 8000ms if chatbox opens quickly, increase to 15000ms if slow)
             await sleep(12000);
 
-            // Send messages with longer wait time
             await typeAndSendMessageOnAllTabs(true);
             
             // WAIT TIME: Wait for all messages to be sent successfully before closing tabs
