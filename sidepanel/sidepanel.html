@@ -52,8 +52,23 @@
 
             <div class="export-section">
                 <button id="exportCsvBtn" class="btn btn-export">
-                    <span>📊 Export Crawled Pages to CSV</span>
+                    <span>📊 Export Page with Basic Information</span>
                 </button>
+                
+                <button id="exportWithContactBtn" class="btn btn-export-contact">
+                    <span>📇 Export Page with Full Information</span>
+                </button>
+                
+                <!-- Contact Collection Progress -->
+                <div id="contactCollectionStatus" class="contact-status" style="display: none;">
+                    <div class="contact-info">
+                        <span class="contact-icon">⏳</span>
+                        <span id="contactMessage">Collecting contact info...</span>
+                    </div>
+                    <div id="contactProgress" class="contact-progress-bar">
+                        <div id="contactProgressFill" class="contact-progress-fill"></div>
+                    </div>
+                </div>
             </div>
 
             <!-- Batch Messaging Section -->
@@ -161,10 +176,10 @@
                 <p>1. Enter search keyword above</p>
                 <p>2. Click "Go" - Auto-scroll will load all results</p>
                 <p>3. Wait for "✅ Scroll completed!"</p>
-                <p>4. Click "Export Newly Crawled Pages to CSV"</p>
-                <p>5. CSV file downloads automatically</p>
-                <p style="margin-top: 8px; font-size: 11px; color: #64748b;">
-                    📋 CSV format: Order, Page Name, Page URL
+                <p>4. Click 
+                    <br>- "Export Page with Basic Information" - Name, URL (Immediately).
+                    <br>- "Export Page with Full Information" - Name, URL, Email, Phone (Wait for all batches to complete).
+                    <br>5. CSV file downloads automatically
                 </p>
             </div>
         </div>

@@ -16,6 +16,7 @@ import {
     sendToAllPages
 } from './modules/batchMessaging.js';
 import { handleCSVUpload, triggerFileUpload } from './modules/uploadCSV.js';
+import { collectContactInfoAndExport } from './modules/batchEmailPhone.js';
 
 /**
  * Initialize application
@@ -29,6 +30,7 @@ document.addEventListener('DOMContentLoaded', function () {
  */
 function setupEventListeners() {
     document.getElementById('exportCsvBtn').addEventListener('click', extractAndExportFacebookPages);
+    document.getElementById('exportWithContactBtn').addEventListener('click', collectContactInfoAndExport);
 
     document.getElementById('goToUrlBtn').addEventListener('click', navigateToUrl);
     document.getElementById('urlInput').addEventListener('keypress', (e) => {
