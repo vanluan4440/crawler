@@ -6,11 +6,11 @@
 import { showMessage } from './ui.js';
 
 /**
- * Content script to scan email and phone from Facebook page
+ * Content script to scan email, phone, and address from Facebook page
  * This runs in the page context
  */
 function scanContactInfoScript() {
-    console.log("Scanning for email and phone numbers...");
+    console.log("Scanning for email, phone numbers, and address...");
     
     const pageText = document.body.innerText;
     
@@ -29,9 +29,34 @@ function scanContactInfoScript() {
     console.log("Found emails:", uniqueEmails);
     console.log("Found phones:", uniquePhones);
     
+    // Scan for address using icon method
+    let address = '';
+    try {
+        const pinIcon = document.querySelector('img[src="https://static.xx.fbcdn.net/rsrc.php/v4/yW/r/8k_Y-oVxbuU.png"]');
+        
+        if (pinIcon) {
+            console.log("Found address icon, extracting address...");
+            
+            // Navigate: img -> closest div -> nextElementSibling (text container)
+            const textContainer = pinIcon.closest('div').nextElementSibling;
+            
+            if (textContainer && textContainer.innerText) {
+                address = textContainer.innerText.trim();
+                console.log("Found address:", address);
+            } else {
+                console.log("Icon found but no text container beside it");
+            }
+        } else {
+            console.log("No address icon found on this page");
+        }
+    } catch (e) {
+        console.error("Error scanning address, DOM structure might differ:", e);
+    }
+    
     return {
         emails: uniqueEmails,
-        phones: uniquePhones
+        phones: uniquePhones,
+        address: address
     };
 }
 
@@ -231,7 +256,7 @@ export async function collectContactInfoAndExport() {
                     });
                     
                     if (results && results[0] && results[0].result) {
-                        const { emails, phones } = results[0].result;
+                        const { emails, phones, address } = results[0].result;
                         
                         pagesWithContact.push({
                             order: pagesWithContact.length + 1,
@@ -239,10 +264,11 @@ export async function collectContactInfoAndExport() {
                             url: page.url,
                             email: emails.length > 0 ? emails[0] : '',
                             phone1: phones.length > 0 ? phones[0] : '',
-                            phone2: phones.length > 1 ? phones[1] : ''
+                            phone2: phones.length > 1 ? phones[1] : '',
+                            address: address || ''
                         });
                         
-                        console.log(`✓ ${page.title}: ${emails.length} emails, ${phones.length} phones`);
+                        console.log(`✓ ${page.title}: ${emails.length} emails, ${phones.length} phones, address: ${address ? 'Yes' : 'No'}`);
                     }
                 } catch (error) {
                     console.error(`Error scanning tab ${tabId}:`, error);
@@ -253,7 +279,8 @@ export async function collectContactInfoAndExport() {
                         url: page.url,
                         email: '',
                         phone1: '',
-                        phone2: ''
+                        phone2: '',
+                        address: ''
                     });
                 }
             }
@@ -302,7 +329,7 @@ export async function collectContactInfoAndExport() {
  */
 function exportContactInfoToCSV(pages) {
     let csv = '\uFEFF'; // UTF-8 BOM
-    csv += '"No","Page Name","Page URL","Email","Phone 1","Phone 2"\r\n';
+    csv += '"No","Page Name","Page URL","Email","Phone 1","Phone 2","Address"\r\n';
     
     pages.forEach((page) => {
         csv += `"${page.order}",`;
@@ -310,7 +337,8 @@ function exportContactInfoToCSV(pages) {
         csv += `"${escapeCSV(page.url)}",`;
         csv += `"${escapeCSV(page.email)}",`;
         csv += `"${escapeCSV(page.phone1)}",`;
-        csv += `"${escapeCSV(page.phone2)}"\r\n`;
+        csv += `"${escapeCSV(page.phone2)}",`;
+        csv += `"${escapeCSV(page.address)}"\r\n`;
     });
     
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
@@ -318,7 +346,7 @@ function exportContactInfoToCSV(pages) {
     
     const link = document.createElement('a');
     link.href = url;
-    link.download = `facebook-pages-with-contact-${Date.now()}.csv`;
+    link.download = `facebook-pages-full-info-${Date.now()}.csv`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
