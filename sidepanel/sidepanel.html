@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Web Crawler - Side Panel</title>
+    <title>Facebook Crawler - Side Panel</title>
     <link rel="stylesheet" href="sidepanel.css">
 </head>
 
@@ -13,125 +13,189 @@
         <div class="sidepanel-header">
             <div class="header-icon">🕷️</div>
             <div class="header-text">
-                <h1>Web Crawler</h1>
-                <p>Extract & Analyze Web Data</p>
+                <h1>Facebook Crawler Tool</h1>
+                <p>Search & Export Facebook pages to excel</p>
             </div>
         </div>
 
         <div class="sidepanel-content">
-            <div class="quick-actions">
-                <div class="action-cards">
-                    <div class="action-card" id="extractLinksCard">
-                        <div class="card-icon">🔗</div>
-                        <div class="card-content">
-                            <h3>Extract Links</h3>
-                            <p>Get all links from current page</p>
-                        </div>
-                    </div>
-                    <div class="action-card" id="extractImagesCard">
-                        <div class="card-icon">🖼️</div>
-                        <div class="card-content">
-                            <h3>Extract Images</h3>
-                            <p>Capture all images</p>
-                        </div>
-                    </div>
-                    <div class="action-card" id="extractMetaCard">
-                        <div class="card-icon">📊</div>
-                        <div class="card-content">
-                            <h3>Get Metadata</h3>
-                            <p>SEO & page info</p>
-                        </div>
-                    </div>
-                    <div class="action-card" id="fullCrawlCard">
-                        <div class="card-icon">🚀</div>
-                        <div class="card-content">
-                            <h3>Full Crawl</h3>
-                            <p>Extract everything</p>
-                        </div>
-                    </div>
+            <!-- URL Navigation -->
+            <div class="url-section">
+                <div class="section-header">
+                    <span class="section-icon">🔍</span>
+                    <h3>Input Search Keyword</h3>
+                </div>
+                <div class="input-container">
+                    <input type="text" id="urlInput" placeholder="Search on Facebook">
+                    <button id="goToUrlBtn" class="btn btn-go">🚀 Go</button>
                 </div>
             </div>
 
-            <div class="current-page">
-                <div class="page-header">
-                    <h3>Current Page</h3>
-                </div>
-                <div class="page-info">
-                    <div class="info-item">
-                        <span class="info-label">URL:</span>
-                        <span class="info-value" id="currentUrl">Loading...</span>
-                    </div>
-                    <div class="info-item">
-                        <span class="info-label">Status:</span>
-                        <span class="info-value" id="pageStatus">Ready</span>
-                    </div>
-                </div>
-            </div>
-
+            <!-- Auto-scroll Option -->
             <div class="extract-options">
-                <h3>Options</h3>
                 <div class="options-list">
                     <label class="option-item">
-                        <input type="checkbox" id="includeExternalLinks" checked>
-                        <span>Include external links</span>
-                    </label>
-                    <label class="option-item">
-                        <input type="checkbox" id="includeImages" checked>
-                        <span>Include images</span>
-                    </label>
-                    <label class="option-item">
-                        <input type="checkbox" id="includeMetadata" checked>
-                        <span>Include metadata</span>
-                    </label>
-                    <label class="option-item">
-                        <input type="checkbox" id="autoExport">
-                        <span>Auto-export results</span>
+                        <input type="checkbox" id="autoScrollEnabled" checked>
+                        <span>Auto-scroll infinitely after search</span>
                     </label>
                 </div>
-            </div>
 
-            <div class="results-preview" id="resultsPreview">
-                <h3>Results Preview</h3>
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <div class="stat-number" id="linksCount">0</div>
-                        <div class="stat-label">Links</div>
+                <!-- Scroll Status Indicator -->
+                <div id="scrollStatus" class="scroll-status" style="display: none;">
+                    <div class="scroll-info">
+                        <span class="scroll-icon">⏳</span>
+                        <span id="scrollMessage">Auto-scrolling...</span>
                     </div>
-                    <div class="stat-card">
-                        <div class="stat-number" id="imagesCount">0</div>
-                        <div class="stat-label">Images</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-number" id="metaCount">0</div>
-                        <div class="stat-label">Meta Tags</div>
-                    </div>
+                    <button id="stopScrollBtn" class="btn-stop">⏹️ Stop</button>
                 </div>
             </div>
 
             <div class="export-section">
-                <button id="exportJsonBtn" class="btn btn-export">
-                    <span>📥 Export JSON</span>
+                <button id="exportCsvBtn" class="btn btn-export">
+                    <span>📊 Export Page with Basic Information</span>
                 </button>
-                <button id="exportCsvBtn" class="btn btn-export btn-secondary">
-                    <span>📊 Export CSV</span>
+                
+                <button id="exportWithContactBtn" class="btn btn-export-contact">
+                    <span>📇 Export Page with Full Information</span>
                 </button>
+                
+                <!-- Contact Collection Progress -->
+                <div id="contactCollectionStatus" class="contact-status" style="display: none;">
+                    <div class="contact-info">
+                        <span class="contact-icon">⏳</span>
+                        <span id="contactMessage">Collecting contact info...</span>
+                    </div>
+                    <div id="contactProgress" class="contact-progress-bar">
+                        <div id="contactProgressFill" class="contact-progress-fill"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Batch Messaging Section -->
+            <div class="batch-section">
+                <div class="section-header">
+                    <span class="section-icon">💬</span>
+                    <h3>Batch Messaging</h3>
+                </div>
+                
+                <div class="batch-controls">
+                    <button id="loadBatchBtn" class="btn btn-primary">
+                        📥 Load Newly Crawled Pages
+                    </button>
+
+                    <div style="display: flex; align-items: center; margin: 0;">
+                        <hr style="flex: 1; border: none; border-top: 1px solid #e5e7eb; margin: 0;">
+                        <span style="margin: 0 12px; color: #94a3b8; font-size: 13px; font-weight: 500;">or</span>
+                        <hr style="flex: 1; border: none; border-top: 1px solid #e5e7eb; margin: 0;">
+                    </div>
+                    
+                    
+                    <!-- CSV Upload Section -->
+                    <div class="csv-upload-section" style="margin-top: 12px;">
+                        <div style="display: flex; gap: 8px; align-items: center;">
+                            <button id="uploadCsvBtn" class="btn btn-primary" style="flex: 1;">
+                                📂 Upload CSV File
+                            </button>
+                            <input 
+                                type="file" 
+                                id="csvFileInput" 
+                                accept=".csv" 
+                                style="display: none;"
+                            />
+                        </div>
+                    </div>
+                    
+                    <!-- Loaded Pages Preview -->
+                    <div id="loadedPagesPreview" class="loaded-pages-preview" style="display: none;">
+                        <span class="loaded-pages-icon">✅</span>
+                        <p id="loadedPagesMessage" class="loaded-pages-message"></p>
+                    </div>
+                    
+                    <div class="batch-progress">
+                        <span id="batchProgress">No data loaded</span>
+                    </div>
+                    
+                    <!-- Message Template Input -->
+                    <div class="message-template-section">
+                        <label for="messageTemplate" class="template-label">
+                            📝 Message Template:
+                        </label>
+                        <textarea 
+                            id="messageTemplate" 
+                            class="message-template-input"
+                            placeholder="Enter your message template here...&#x0a;Example: Xin chào! Tôi muốn hợp tác với fanpage của bạn."
+                            rows="4"
+                        ></textarea>
+                    </div>
+                    
+                    <!-- Auto Send Button -->
+                    <button id="sendToAllPagesBtn" class="btn btn-auto-send" disabled>
+                        🚀 Send to All Pages (Auto)
+                    </button>
+                    
+                    <!-- Manual Controls (for testing) -->
+                    <details style="margin-top: 12px;">
+                        <summary style="cursor: pointer; color: #64748b; font-size: 12px;">Manual Controls (Advanced)</summary>
+                        <div style="margin-top: 8px; display: flex; flex-direction: column; gap: 8px;">
+                            <button id="openBatchBtn" class="btn btn-success" disabled>
+                                🚀 Open Next Batch (5 tabs)
+                            </button>
+                            
+                            <button id="clickMessageBtn" class="btn btn-message" disabled>
+                                💬 Click "Nhắn tin" Button (Step 1)
+                            </button>
+                            
+                            <button id="sendMessageBtn" class="btn btn-send" disabled>
+                                📨 Type & Send Message (Step 2)
+                            </button>
+                        </div>
+                    </details>
+                    
+                    <div class="batch-actions">
+                        <button id="closeBatchBtn" class="btn btn-secondary" disabled>
+                            ❌ Close Current Batch
+                        </button>
+                        <button id="resetBatchBtn" class="btn btn-warning" disabled>
+                            🔄 Reset Process
+                        </button>
+                    </div>
+                </div>
+
+                <div class="batch-info">
+                    <p style="font-size: 12px; color: #64748b;">
+                        💡 Auto Workflow: load newly crawled pages or uploaded CSV → Enter template → Click "Send to All Pages" → Done! 🎉
+                    </p>
+                    <p style="font-size: 11px; color: #94a3b8; margin-top: 4px;">
+                        The extension will automatically open batches and send messages to all pages.
+                    </p>
+                </div>
             </div>
 
             <div class="help-section">
-                <h3>💡 How to Use</h3>
-                <p>1. Open any webpage</p>
-                <p>2. Click on any action card above to extract data</p>
-                <p>3. View results in the Crawler tab in DevTools (F12)</p>
-                <p>4. Export data using the buttons above</p>
+                <h3>💡 How to Use - Facebook pages Export</h3>
+                <p>1. Enter search keyword above</p>
+                <p>2. Click "Go" - Auto-scroll will load all results</p>
+                <p>3. Wait for "✅ Scroll completed!"</p>
+                <p>4. Click 
+                    <br>- "Export Page with Basic Information" - Name, URL (Immediately).
+                    <br>- "Export Page with Full Information" - Name, URL, Email, Phone, Address (Wait for all batches to complete).
+                    <br>5. CSV file downloads automatically
+                </p>
+                <p style="margin-top: 8px; font-size: 11px; color: #64748b;">
+                    📋 Full Info CSV format: Order, Page Name, Page URL, Email, Phone 1, Phone 2, Address
+                </p>
+                <p style="margin-top: 4px; font-size: 11px; color: #f59e0b;">
+                    ⚠️ Full export takes 15+ seconds per batch (5 pages) to ensure all info loads
+                </p>
             </div>
         </div>
 
         <div class="sidepanel-footer">
-            <p>Web Crawler DevTools v1.0.0</p>
+            <p>Facebook Crawler Tool v1.0.0</p>
         </div>
     </div>
 
-    <script src="sidepanel.js"></script>
+    <script type="module" src="sidepanel.js"></script>
 </body>
 
 </html>

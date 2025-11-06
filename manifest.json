@@ -8,12 +8,15 @@
     "tabs",
     "activeTab",
     "scripting",
-    "sidePanel"
+    "sidePanel",
+    "debugger"
   ],
   "host_permissions": [
-    "<all_urls>"
+    "<all_urls>",
+    "*://*.facebook.com/*"
   ],
-  "action": {},
+  "action": {
+  },
   "side_panel": {
     "default_path": "sidepanel/sidepanel.html"
   },

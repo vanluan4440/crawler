@@ -1,210 +1,87 @@
-let currentPageUrl = '';
-let extractedData = {
-    links: [],
-    images: [],
-    metadata: {}
-};
+/**
+ * Main Sidepanel Script
+ * Orchestrates all modules and sets up event listeners
+ */
 
-document.addEventListener('DOMContentLoaded', async function () {
-    await loadCurrentPageInfo();
+import { navigateToUrl } from './modules/navigation.js';
+import { stopScroll } from './modules/scroll.js';
+import { extractAndExportFacebookPages } from './modules/exportCSV.js';
+import { 
+    loadBatchFromCurrentPage, 
+    openNextBatch, 
+    closeCurrentBatchTabs, 
+    resetBatchProcess,
+    clickMessageButtonOnAllTabs,
+    typeAndSendMessageOnAllTabs,
+    sendToAllPages
+} from './modules/batchMessaging.js';
+import { handleCSVUpload, triggerFileUpload } from './modules/uploadCSV.js';
+import { collectContactInfoAndExport } from './modules/batchEmailPhone.js';
+
+/**
+ * Initialize application
+ */
+document.addEventListener('DOMContentLoaded', function () {
     setupEventListeners();
 });
 
-async function loadCurrentPageInfo() {
-    const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
-    if (tabs[0]) {
-        currentPageUrl = tabs[0].url;
-        document.getElementById('currentUrl').textContent = currentPageUrl;
+/**
+ * Setup all event listeners
+ */
+function setupEventListeners() {
+    document.getElementById('exportCsvBtn').addEventListener('click', extractAndExportFacebookPages);
+    document.getElementById('exportWithContactBtn').addEventListener('click', collectContactInfoAndExport);
 
-        const pageStatus = document.getElementById('pageStatus');
-
-        if (currentPageUrl.startsWith('chrome://') ||
-            currentPageUrl.startsWith('chrome-extension://') ||
-            currentPageUrl.startsWith('edge://')) {
-            pageStatus.textContent = 'Not Available';
-            pageStatus.style.color = '#ef4444';
-        } else if (currentPageUrl.startsWith('file://')) {
-            pageStatus.textContent = 'File Page';
-            pageStatus.style.color = '#f59e0b';
-        } else {
-            pageStatus.textContent = 'Ready';
-            pageStatus.style.color = '#10b981';
+    document.getElementById('goToUrlBtn').addEventListener('click', navigateToUrl);
+    document.getElementById('urlInput').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            navigateToUrl();
         }
+    });
+
+    document.getElementById('stopScrollBtn').addEventListener('click', stopScroll);
+
+    // CSV Upload event listeners
+    document.getElementById('uploadCsvBtn').addEventListener('click', triggerFileUpload);
+    document.getElementById('csvFileInput').addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            handleCSVUpload(file);
+        }
+    });
+
+    // Batch messaging event listeners
+    document.getElementById('loadBatchBtn').addEventListener('click', loadBatchFromCurrentPage);
+    
+    // Auto send button - main feature
+    document.getElementById('sendToAllPagesBtn').addEventListener('click', sendToAllPages);
+    
+    // Manual controls (for testing)
+    document.getElementById('openBatchBtn').addEventListener('click', openNextBatch);
+    document.getElementById('clickMessageBtn').addEventListener('click', clickMessageButtonOnAllTabs);
+    document.getElementById('sendMessageBtn').addEventListener('click', typeAndSendMessageOnAllTabs);
+    document.getElementById('closeBatchBtn').addEventListener('click', closeCurrentBatchTabs);
+    document.getElementById('resetBatchBtn').addEventListener('click', resetBatchProcess);
+
+    // Update button states when message template changes
+    const messageTemplate = document.getElementById('messageTemplate');
+    if (messageTemplate) {
+        messageTemplate.addEventListener('input', () => {
+            const hasContent = messageTemplate.value.trim().length > 0;
+            const hasData = document.getElementById('batchProgress')?.textContent !== 'No data loaded';
+            
+            // Update auto send button
+            const autoSendBtn = document.getElementById('sendToAllPagesBtn');
+            if (autoSendBtn) {
+                autoSendBtn.disabled = !hasContent || !hasData;
+            }
+            
+            // Update manual send button
+            const sendBtn = document.getElementById('sendMessageBtn');
+            if (sendBtn) {
+                const hasOpenTabs = document.getElementById('batchProgress')?.textContent !== 'No data loaded';
+                sendBtn.disabled = !hasContent || !hasOpenTabs;
+            }
+        });
     }
 }
-
-function setupEventListeners() {
-    document.getElementById('extractLinksCard').addEventListener('click', () => {
-        highlightCard('extractLinksCard');
-        extractLinks();
-    });
-
-    document.getElementById('extractImagesCard').addEventListener('click', () => {
-        highlightCard('extractImagesCard');
-        extractImages();
-    });
-
-    document.getElementById('extractMetaCard').addEventListener('click', () => {
-        highlightCard('extractMetaCard');
-        extractMetadata();
-    });
-
-    document.getElementById('fullCrawlCard').addEventListener('click', () => {
-        highlightCard('fullCrawlCard');
-        fullCrawl();
-    });
-
-    document.getElementById('exportJsonBtn').addEventListener('click', exportToJson);
-    document.getElementById('exportCsvBtn').addEventListener('click', exportToCsv);
-}
-
-function highlightCard(cardId) {
-    document.querySelectorAll('.action-card').forEach(card => {
-        card.classList.remove('active');
-    });
-    document.getElementById(cardId).classList.add('active');
-}
-
-async function extractLinks() {
-    const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
-    if (!tabs[0]) return;
-
-    chrome.scripting.executeScript({
-        target: { tabId: tabs[0].id },
-        func: function () {
-            const links = Array.from(document.querySelectorAll('a[href]')).map(a => ({
-                url: a.href,
-                text: a.textContent.trim() || '(no text)'
-            }));
-            return links;
-        }
-    }, (results) => {
-        if (results && results[0]) {
-            extractedData.links = results[0].result;
-            updateStats();
-            showMessage('Links extracted successfully!');
-        }
-    });
-}
-
-async function extractImages() {
-    const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
-    if (!tabs[0]) return;
-
-    chrome.scripting.executeScript({
-        target: { tabId: tabs[0].id },
-        func: function () {
-            const images = Array.from(document.querySelectorAll('img')).map(img => ({
-                src: img.src,
-                alt: img.alt || '(no alt)',
-                width: img.naturalWidth,
-                height: img.naturalHeight
-            }));
-            return images;
-        }
-    }, (results) => {
-        if (results && results[0]) {
-            extractedData.images = results[0].result;
-            updateStats();
-            showMessage('Images extracted successfully!');
-        }
-    });
-}
-
-async function extractMetadata() {
-    const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
-    if (!tabs[0]) return;
-
-    chrome.scripting.executeScript({
-        target: { tabId: tabs[0].id },
-        func: function () {
-            const getMeta = (name) => {
-                const meta = document.querySelector(`meta[name="${name}"]`) ||
-                    document.querySelector(`meta[property="${name}"]`);
-                return meta ? meta.content : '';
-            };
-
-            return {
-                title: document.title,
-                description: getMeta('description') || getMeta('og:description'),
-                keywords: getMeta('keywords'),
-                author: getMeta('author'),
-                ogTitle: getMeta('og:title'),
-                ogImage: getMeta('og:image')
-            };
-        }
-    }, (results) => {
-        if (results && results[0]) {
-            extractedData.metadata = results[0].result;
-            updateStats();
-            showMessage('Metadata extracted successfully!');
-        }
-    });
-}
-
-async function fullCrawl() {
-    extractLinks();
-    extractImages();
-    extractMetadata();
-    showMessage('Full crawl completed!');
-}
-
-function updateStats() {
-    document.getElementById('linksCount').textContent = extractedData.links.length;
-    document.getElementById('imagesCount').textContent = extractedData.images.length;
-    document.getElementById('metaCount').textContent = extractedData.metadata.title ? 1 : 0;
-}
-
-function exportToJson() {
-    const dataStr = JSON.stringify(extractedData, null, 2);
-    const dataBlob = new Blob([dataStr], { type: 'application/json' });
-    const url = URL.createObjectURL(dataBlob);
-
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `crawl-data-${Date.now()}.json`;
-    link.click();
-
-    URL.revokeObjectURL(url);
-    showMessage('JSON exported!');
-}
-
-function exportToCsv() {
-    let csv = 'Type,URL,Text,Additional\n';
-
-    extractedData.links.forEach(link => {
-        csv += `Link,"${escapeCSV(link.url)}","${escapeCSV(link.text)}"\n`;
-    });
-
-    extractedData.images.forEach(img => {
-        csv += `Image,"${escapeCSV(img.src)}","${escapeCSV(img.alt)}","${img.width}x${img.height}"\n`;
-    });
-
-    const csvBlob = new Blob([csv], { type: 'text/csv' });
-    const url = URL.createObjectURL(csvBlob);
-
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `crawl-data-${Date.now()}.csv`;
-    link.click();
-
-    URL.revokeObjectURL(url);
-    showMessage('CSV exported!');
-}
-
-function escapeCSV(text) {
-    return String(text).replace(/"/g, '""');
-}
-
-function showMessage(message) {
-    const footer = document.querySelector('.sidepanel-footer p');
-    const originalText = footer.textContent;
-    footer.textContent = message;
-    footer.style.color = '#10b981';
-
-    setTimeout(() => {
-        footer.textContent = originalText;
-        footer.style.color = '#94a3b8';
-    }, 3000);
-}
-
