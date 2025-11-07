@@ -6,99 +6,109 @@
 import { showMessage } from './ui.js';
 
 /**
- * Content script to scan email, phone, and address from Facebook page
+ * Content script to scan email, phone, and address from Facebook /about page
  * This runs in the page context
+ * Uses label-based scanning for better accuracy
  */
 function scanContactInfoScript() {
-    console.log("Scanning for email, phone numbers, and address...");
+    console.log("Scanning for contact info using label-based method...");
 
-    const emails = [];
-    const phones = [];
-    let address = '';
+    let allAddresses = [];
+    let allPhones = [];
+    let allEmails = [];
+    // let allWebsites = [];
 
-    try {
-        const allUl = document.querySelectorAll('ul');
-
-        if (allUl.length >= 2) {
-            const targetUl = allUl[1];
-            const allSpan = targetUl.querySelectorAll('span');
-
-            const phoneRegex = /(?:0|\+84)[\d .-]{8,20}[\d]/g;
-            const emailRegex = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
-
-            const addressKeywords = [
-                'Đường', 'Street', 'Phường', 'Ward', 'Quận', 'District',
-                'Huyện', 'Thành Phố', 'City', 'Province', 'Tỉnh', 'Vietnam'
-            ];
-
-            for (let item of allSpan) {
-                const text = item.innerText.trim();
-
-                if (!text || text.length === 0) continue;
-
-                const emailMatch = text.match(emailRegex);
-                if (emailMatch) {
-                    emails.push(...emailMatch);
-                }
-
-                const phoneMatch = text.match(phoneRegex);
-                if (phoneMatch) {
-                    phones.push(...phoneMatch);
-                }
-
-                if (!address) {
-                    const hasAddressKeywords = addressKeywords.some(keyword =>
-                        text.includes(keyword)
-                    );
-
-                    if (hasAddressKeywords && text.length > 30 && text.length < 300) {
-                        const hasCommas = text.includes(',');
-                        const hasNumbers = /\d/.test(text);
-
-                        if (hasCommas && hasNumbers) {
-                            address = text;
+    /**
+     * Helper function for Phone, Email, Website,... (inside <li>)
+     */
+    function findDataByLabel(labelText) {
+        let data = [];
+        try {
+            const allSpans = document.querySelectorAll('span');
+            allSpans.forEach(span => {
+                if (span.textContent === labelText) {
+                    let parentLi = span.closest('li');
+                    if (parentLi) {
+                        let dataSpan = parentLi.querySelector('span[dir="auto"]');
+                        if (dataSpan) {
+                            data.push(dataSpan.innerText.trim());
                         }
                     }
                 }
-            }
-
-            const uniqueEmails = [...new Set(emails)];
-            const uniquePhones = [...new Set(phones)];
-
-            console.log("Found emails:", uniqueEmails);
-            console.log("Found phones:", uniquePhones);
-            console.log("Found address:", address);
-
-            return {
-                emails: uniqueEmails,
-                phones: uniquePhones,
-                address: address
-            };
-        } else {
-            console.log("Target ul element not found, falling back to page scan");
+            });
+        } catch (e) {
+            console.error(`Error finding data by label "${labelText}":`, e);
         }
-    } catch (e) {
-        console.error("Error scanning from ul structure:", e);
+        return data;
     }
 
-    const pageText = document.body.innerText;
+    /**
+     * Special function for Address (not inside <li>)
+     * Supports both Vietnamese "Địa chỉ" and English "Address"
+     */
+    function findAddress() {
+        try {
+            const allSpans = document.querySelectorAll('span');
+            allSpans.forEach(span => {
+                if (span.textContent === "Địa chỉ" || span.textContent === "Address") {
+                    // (span -> span -> div)
+                    let labelContainer = span.parentElement.parentElement;                    
+                    let dataContainer = labelContainer.previousElementSibling;
+                    
+                    if (dataContainer) {
+                        let dataSpan = dataContainer.querySelector('span[dir="auto"]');
+                        if (dataSpan) {
+                            allAddresses.push(dataSpan.innerText.trim());
+                        }
+                    }
+                }
+            });
+        } catch (e) {
+            console.error("Error finding Address:", e);
+        }
+    }
 
-    const phoneRegex = /(?:0|\+84)[\d .-]{8,20}[\d]/g;
-    const emailRegex = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
+    // Scan Address (Vietnamese and English)
+    findAddress();
 
-    const foundEmails = pageText.match(emailRegex) || [];
-    const foundPhones = pageText.match(phoneRegex) || [];
+    // Scan Phone (Vietnamese and English)
+    allPhones.push(...findDataByLabel("Di động"));
+    allPhones.push(...findDataByLabel("Phone"));
+    allPhones.push(...findDataByLabel("Mobile"));
 
-    const uniqueEmails = [...new Set(foundEmails)];
-    const uniquePhones = [...new Set(foundPhones)];
+    // Scan Email
+    allEmails.push(...findDataByLabel("Email"));
 
-    console.log("Fallback: Found emails:", uniqueEmails);
-    console.log("Fallback: Found phones:", uniquePhones);
+    // Scan WhatsApp (commented out - not needed yet)
+    // const allWhatsApp = [];
+    // allWhatsApp.push(...findDataByLabel("WhatsApp"));
+
+    // Scan Websites and Social Media (commented out - not needed yet)
+    // allWebsites.push(...findDataByLabel("Trang web"));
+    // allWebsites.push(...findDataByLabel("Website"));
+    // allWebsites.push(...findDataByLabel("TikTok"));
+    // allWebsites.push(...findDataByLabel("Instagram"));
+    // allWebsites.push(...findDataByLabel("Facebook"));
+
+    const uniqueAddresses = [...new Set(allAddresses)];
+    const uniquePhones = [...new Set(allPhones)];
+    const uniqueEmails = [...new Set(allEmails)];
+    // const uniqueWhatsApp = [...new Set(allWhatsApp)];
+    // const uniqueWebsites = [...new Set(allWebsites)];
+
+    console.log("--- SCAN RESULTS ---");
+    console.log(`Addresses (${uniqueAddresses.length}):`, uniqueAddresses);
+    console.log(`Phones (${uniquePhones.length}):`, uniquePhones);
+    console.log(`Emails (${uniqueEmails.length}):`, uniqueEmails);
+    // console.log(`WhatsApp (${uniqueWhatsApp.length}):`, uniqueWhatsApp);
+    // console.log(`Websites (${uniqueWebsites.length}):`, uniqueWebsites);
 
     return {
         emails: uniqueEmails,
         phones: uniquePhones,
-        address: address
+        address: uniqueAddresses.length > 0 ? uniqueAddresses[0] : ''
+        // whatsapp: uniqueWhatsApp.length > 0 ? uniqueWhatsApp[0] : '',
+        // websites: uniqueWebsites
     };
 }
 
@@ -267,11 +277,13 @@ export async function collectContactInfoAndExport() {
 
             console.log(`\n=== Batch ${batchNumber}/${totalBatches} ===`);
 
-            // Open tabs for current batch
+            // Open tabs for current batch with /about suffix
             const tabIds = [];
             for (const page of currentBatch) {
+                // Add /about to URL to access the About page
+                const aboutUrl = page.url.endsWith('/') ? page.url + 'about' : page.url + '/about';
                 const tab = await chrome.tabs.create({
-                    url: page.url,
+                    url: aboutUrl,
                     active: false
                 });
                 tabIds.push(tab.id);
@@ -305,9 +317,10 @@ export async function collectContactInfoAndExport() {
                             title: page.title,
                             url: page.url,
                             email: emails.length > 0 ? emails[0] : '',
-                            phone1: phones.length > 0 ? phones[0] : '',
-                            phone2: phones.length > 1 ? phones[1] : '',
+                            phone: phones.length > 0 ? phones[0] : '',
+                            // whatsapp: whatsapp || '',
                             address: address || ''
+                            // website: websites && websites.length > 0 ? websites[0] : ''
                         });
 
                         console.log(`✓ ${page.title}: ${emails.length} emails, ${phones.length} phones, address: ${address ? 'Yes' : 'No'}`);
@@ -320,9 +333,10 @@ export async function collectContactInfoAndExport() {
                         title: page.title,
                         url: page.url,
                         email: '',
-                        phone1: '',
-                        phone2: '',
+                        phone: '',
+                        // whatsapp: '',
                         address: ''
+                        // website: ''
                     });
                 }
             }
@@ -371,16 +385,18 @@ export async function collectContactInfoAndExport() {
  */
 function exportContactInfoToCSV(pages) {
     let csv = '\uFEFF'; // UTF-8 BOM
-    csv += '"No","Page Name","Page URL","Email","Phone 1","Phone 2","Address"\r\n';
+    csv += '"No","Page Name","Page URL","Email","Phone","Address"\r\n';
+    // csv += '"No","Page Name","Page URL","Email","Phone","WhatsApp","Address","Website"\r\n';
 
     pages.forEach((page) => {
         csv += `"${page.order}",`;
         csv += `"${escapeCSV(page.title)}",`;
         csv += `"${escapeCSV(page.url)}",`;
         csv += `"${escapeCSV(page.email)}",`;
-        csv += `"${escapeCSV(page.phone1)}",`;
-        csv += `"${escapeCSV(page.phone2)}",`;
+        csv += `"${escapeCSV(page.phone)}",`;
+        // csv += `"${escapeCSV(page.whatsapp)}",`;
         csv += `"${escapeCSV(page.address)}"\r\n`;
+        // csv += `"${escapeCSV(page.website)}"\r\n`;
     });
 
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
